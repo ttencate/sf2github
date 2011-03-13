@@ -4,6 +4,7 @@ import sys
 import optparse
 
 parser = optparse.OptionParser(usage='Usage: %prog [options] sfexport.xml githubuser/repo')
+parser.add_option('-s', '--start', dest='start_id', action='store', help='id of first issue to import; useful for aborted runs')
 opts, args = parser.parse_args()
 
 try:
@@ -35,7 +36,10 @@ github_password = getpass('%s\'s GitHub password: ' % github_user)
 
 def rest_call(before, after, data_dict=None):
     url = 'https://github.com/api/v2/xml/%s/%s/%s' % (before, github_repo, after)
-    data = urlencode(data_dict or {})
+    if data_dict is None:
+        data = None
+    else:
+        data = urlencode([(unicode(key).encode('utf-8'), unicode(value).encode('utf-8')) for key, value in data_dict.iteritems()])
     headers = {
         'Authorization': 'Basic %s' % b64encode('%s:%s' % (github_user, github_password)),
     }
@@ -63,7 +67,13 @@ categories = {}
 for category in tracker.categories('category', recursive=False):
     categories[category.id.string] = category.category_name.string
 
+started = opts.start_id is None
 for item in tracker.tracker_items('tracker_item', recursive=False):
+    if not started:
+        if item.id.string == opts.start_id:
+            started = True
+        else:
+            continue
     title = item.summary.string
     body = '\n\n'.join([
         'Converted from [SourceForge issue %s](%s), submitted by %s' % (item.id.string, item.url.string, item.submitter.string),
