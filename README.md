@@ -32,7 +32,9 @@ This script doesn't help you to migrate code from SF's Subversion to GitHub. How
 Usage
 -----
 
-Run the `issues.py` script and it will print instructions. Basically, if your SF XML export is in `foo.xml`, your GitHub username is `john` and your repository is `bar`:
+From SourceForge, you need to export the tracker data in XML. Read [here](https://sourceforge.net/apps/trac/sourceforge/wiki/XML%20export) for instructions.
+
+Run the `issues.py` script and it will print further instructions. Basically, if your SF XML export is in `foo.xml`, your GitHub username is `john` and your repository is `bar`:
 
     ./issues.py foo.xml john/bar
 
