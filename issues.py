@@ -85,15 +85,7 @@ for category in tracker.categories('category', recursive=False):
     categories[category.id.string] = category.category_name.string
 print "categories:", categories
 
-started = opts.start_id is None
 def handle_tracker_item(item, issue_title_prefix):
-    global started
-    if not started:
-        if item.id.string == opts.start_id:
-            started = True
-        else:
-            return
-
     if len(issue_title_prefix) > 0:
         issue_title_prefix = issue_title_prefix.strip() + " "
         
@@ -202,6 +194,8 @@ def getIssueTitlePrefix(trackername):
                 break
     return prefix
 
+skipped_count = 0
+started = opts.start_id is None
 items = []
 for tracker in trackers:
     trackeritems = tracker.tracker_items('tracker_item', recursive=False)
@@ -212,11 +206,18 @@ for tracker in trackers:
     
     issue_title_prefix = None
     for item in trackeritems:
+        if not started:
+            if item.id.string == opts.start_id:
+                started = True
+            else:
+                skipped_count += 1
+                continue
+
         if issue_title_prefix is None:
             issue_title_prefix = getIssueTitlePrefix(trackername)
         items.append((item, issue_title_prefix))
 
-print "Found", len(items), "items in", len(trackers), "trackers."
+print "Found", len(items), "items (" + str(skipped_count) + " skipped) in", len(trackers), "trackers."
 
 userVerify("Everything ok, should I really start?")
 github_password = getpass('%s\'s GitHub password: ' % github_user)
