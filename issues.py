@@ -205,6 +205,6 @@ print "Found", len(items), "items in", len(trackers), "trackers."
 
 userVerify("Everything ok, should I really start?")
 github_password = getpass('%s\'s GitHub password: ' % github_user)
-for item in items:
-    handle_tracker_item(item)
+for item, issue_title_prefix in items:
+    handle_tracker_item(item, issue_title_prefix)
     
