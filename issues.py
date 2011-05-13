@@ -20,9 +20,7 @@ print 'Parsing XML export...'
 soup = BeautifulStoneSoup(open(xml_file_name, 'r'), convertEntities=BeautifulStoneSoup.ALL_ENTITIES)
 
 trackers = soup.document.find('trackers', recursive=False).findAll('tracker', recursive=False)
-if len(trackers) > 1:
-    print 'Multiple trackers not yet supported, sorry'
-    sys.exit(1)
+assert len(trackers) == 1, 'Multiple trackers not yet supported, sorry'
 tracker = trackers[0]
 
 from urllib import urlencode
