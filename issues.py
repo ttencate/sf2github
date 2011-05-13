@@ -25,14 +25,14 @@ soup = BeautifulStoneSoup(open(xml_file_name, 'r'), convertEntities=BeautifulSto
 trackers = soup.document.find('trackers', recursive=False).findAll('tracker', recursive=False)
 
 from urllib import urlencode
-from urllib2 import Request, urlopen
+from urllib2 import Request, urlopen, HTTPError
 from base64 import b64encode
 from time import sleep
 from getpass import getpass
 import re
 
-def rest_call(before, after, data_dict=None):
-    global github_user, github_password
+def __rest_call_unchecked(before, after, data_dict=None):
+    global github_repo, github_user, github_password
     url = 'https://github.com/api/v2/xml/%s/%s/%s' % (before, github_repo, after)
     if data_dict is None:
         data = None
@@ -46,6 +46,21 @@ def rest_call(before, after, data_dict=None):
     # GitHub limits API calls to 60 per minute
     sleep(1)
     return response
+
+def rest_call(before, after, data_dict=None):
+    while True:
+        try:
+            return __rest_call_unchecked(before, after, data_dict)
+        except HTTPError, e:
+            print "Got HTTPError:", e
+            if e.code == 413 and data_dict: # Request Entity Too Large
+                l = max(map(len, data_dict.itervalues()))
+                assert l > 0
+                print "Longest value has len", l, "; now we are trying with half of that"
+                l /= 2
+                data_dict = dict(map(lambda (k,v): (k,v[0:l]), data_dict.iteritems()))
+                continue
+            raise e # reraise, we cannot handle it
 
 def labelify(string):
     return re.sub(r'[^a-z0-9._-]+', '-', string.lower())
@@ -105,7 +120,7 @@ def handle_tracker_item(item, issue_title_prefix):
             followup.details.string,
         ]))
 
-    print 'Creating: %s [%s] (%d comments)%s' % (title, ','.join(labels), len(comments), ' (closed)' if closed else '')
+    print 'Creating: %s [%s] (%d comments)%s for SF #%s' % (title, ','.join(labels), len(comments), ' (closed)' if closed else '', item.id.string)
     response = rest_call('issues/open', '', {'title': title, 'body': body})
     issue = BeautifulStoneSoup(response, convertEntities=BeautifulStoneSoup.ALL_ENTITIES)
     number = issue.number.string
