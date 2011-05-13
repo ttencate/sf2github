@@ -48,6 +48,7 @@ def __rest_call_unchecked(before, after, data_dict=None):
     return response
 
 def rest_call(before, after, data_dict=None):
+    count500err = 0
     while True:
         try:
             return __rest_call_unchecked(before, after, data_dict)
@@ -59,6 +60,13 @@ def rest_call(before, after, data_dict=None):
                 print "Longest value has len", l, "; now we are trying with half of that"
                 l /= 2
                 data_dict = dict(map(lambda (k,v): (k,v[0:l]), data_dict.iteritems()))
+                continue
+            elif e.code == 500:
+                N = 5
+                if count500err >= N: raise e
+                print "Waiting 10 seconds, will try", (N - count500err), "more times"
+                sleep(10)
+                count500err += 1
                 continue
             raise e # reraise, we cannot handle it
 
