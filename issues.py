@@ -1,5 +1,8 @@
 #!/usr/bin/env python
 
+import better_exchook
+better_exchook.install()
+
 import sys
 import optparse
 
