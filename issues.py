@@ -54,8 +54,8 @@ def rest_call(before, after, data_dict=None):
             return __rest_call_unchecked(before, after, data_dict)
         except HTTPError, e:
             print "Got HTTPError:", e
-            if e.code == 413 and data_dict: # Request Entity Too Large
-                l = max(map(len, data_dict.itervalues()))
+            l = data_dict and max(map(len, data_dict.itervalues())) or 0
+            if e.code == 413 or l >= 100000: # Request Entity Too Large
                 assert l > 0
                 print "Longest value has len", l, "; now we are trying with half of that"
                 l /= 2
