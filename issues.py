@@ -128,7 +128,7 @@ def handle_tracker_item(item, issue_title_prefix):
         print 'Attaching label: %s' % label
         rest_call('issues/label/add', '%s/%s' % (label, number))
     for comment in comments:
-        print 'Creating comment: %s' % comment[:50].replace('\n', ' ')
+        print 'Creating comment: %s' % comment[:50].replace('\n', ' ').replace(chr(13), '')
         rest_call('issues/comment', number, {'comment': comment})
     if closed:
         print 'Closing...'
