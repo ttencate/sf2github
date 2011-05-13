@@ -23,8 +23,6 @@ print 'Parsing XML export...'
 soup = BeautifulStoneSoup(open(xml_file_name, 'r'), convertEntities=BeautifulStoneSoup.ALL_ENTITIES)
 
 trackers = soup.document.find('trackers', recursive=False).findAll('tracker', recursive=False)
-assert len(trackers) == 1, 'Multiple trackers not yet supported, sorry'
-tracker = trackers[0]
 
 from urllib import urlencode
 from urllib2 import Request, urlopen
@@ -33,9 +31,8 @@ from time import sleep
 from getpass import getpass
 import re
 
-github_password = getpass('%s\'s GitHub password: ' % github_user)
-
 def rest_call(before, after, data_dict=None):
+    global github_user, github_password
     url = 'https://github.com/api/v2/xml/%s/%s/%s' % (before, github_repo, after)
     if data_dict is None:
         data = None
@@ -53,29 +50,39 @@ def rest_call(before, after, data_dict=None):
 def labelify(string):
     return re.sub(r'[^a-z0-9._-]+', '-', string.lower())
 
-closed_status_ids = []
-for status in tracker.statuses('status', recursive=False):
-    status_id = status.id.string
-    status_name = status.nameTag.string
-    if status_name in ['Closed', 'Deleted']:
-        closed_status_ids.append(status_id)
+closed_status_ids = set()
+for tracker in trackers:
+    for status in tracker.statuses('status', recursive=False):
+        status_id = status.id.string
+        status_name = status.nameTag.string
+        if status_name in ['Closed', 'Deleted']:
+            closed_status_ids.add(status_id)
+print "closed_status_ids:", closed_status_ids
 
 groups = {}
-for group in tracker.groups('group', recursive=False):
-    groups[group.id.string] = group.group_name.string
+for tracker in trackers:
+    for group in tracker.groups('group', recursive=False):
+        groups[group.id.string] = group.group_name.string
+print "groups:", groups
 
 categories = {}
 for category in tracker.categories('category', recursive=False):
     categories[category.id.string] = category.category_name.string
+print "categories:", categories
 
 started = opts.start_id is None
-for item in tracker.tracker_items('tracker_item', recursive=False):
+def handle_tracker_item(item, issue_title_prefix):
+    global started
     if not started:
         if item.id.string == opts.start_id:
             started = True
         else:
-            continue
-    title = item.summary.string
+            return
+
+    if len(issue_title_prefix) > 0:
+        issue_title_prefix = issue_title_prefix.strip() + " "
+        
+    title = issue_title_prefix + item.summary.string
     body = '\n\n'.join([
         'Converted from [SourceForge issue %s](%s), submitted by %s' % (item.id.string, item.url.string, item.submitter.string),
         item.details.string,
@@ -112,3 +119,92 @@ for item in tracker.tracker_items('tracker_item', recursive=False):
         print 'Closing...'
         rest_call('issues/close', number)
 
+
+import signal
+def signal_handler(signal, frame):
+	print 'You pressed Ctrl+C!'
+	import sys
+	sys.exit(0)
+signal.signal(signal.SIGINT, signal_handler)
+
+import readline
+readline.parse_and_bind("tab: complete")
+readline.parse_and_bind("set show-all-if-ambiguous on")
+
+class Completer:
+    def __init__(self, words):
+        self.words = words
+        self.prefix = None
+
+    def complete(self, prefix, index):
+        if prefix != self.prefix:
+            self.matching_words = [w for w in self.words if w.startswith(prefix)]
+            self.prefix = prefix
+        else:
+            pass                
+        try:
+            return self.matching_words[index]
+        except IndexError:
+            return None
+
+def userRawInput(prompt):
+    readline.set_completer(None)
+    s = raw_input(prompt)
+    return s
+
+def userInput(words, prompt=""):
+	readline.set_completer(Completer(words).complete)
+	while True:
+		s = raw_input((prompt + " ").lstrip() + "Choice of [" + ", ".join(words) + "] ? ")
+		if s in words: return s
+		print "Error: '" + s + "' unknown, please try again"
+
+def userVerify(txt, abortOnFail=True):
+    if userInput(["yes","no"], txt) != 'yes':
+        if abortOnFail:
+            print "Aborted."
+            sys.exit(1)
+        return False
+    return True
+
+def getIssueTitlePrefix(trackername):
+    prefixes = {
+        "Bug": "",
+        "Feature Request": "[Feature]",
+        "Patch": "[Patch]",
+        "Tech Support": "[Support]"
+        }
+    if trackername in prefixes:
+        return prefixes[trackername]
+    
+    prefix = "[" + trackername + "]"
+    if not userVerify("Tracker '" + trackername + "' is unknown,"
+        + "I would use the prefix '" + prefix + "', ok?", False):
+        
+        while True:
+            prefix = userRawInput("Please enter a prefix: ")
+            if userVerify("Is prefix '" + prefix + "' ok?"):
+                break
+    return prefix
+
+items = []
+for tracker in trackers:
+    trackeritems = tracker.tracker_items('tracker_item', recursive=False)
+    trackername = tracker.description.string
+    print "Found tracker:", trackername, ",", len(trackeritems), "items"
+    trackername = trackername.replace("Tracking System", "")
+    trackername = trackername.strip()
+    
+    issue_title_prefix = None
+    for item in trackeritems:
+        if issue_title_prefix is None:
+            issue_title_prefix = getIssueTitlePrefix(trackername)
+        items.append((item, issue_title_prefix))
+
+print "Found", len(items), "items in", len(trackers), "trackers."
+
+userVerify("Everything ok, should I really start?")
+github_password = getpass('%s\'s GitHub password: ' % github_user)
+for item in items:
+    handle_tracker_item(item)
+    
