@@ -25,14 +25,14 @@ soup = BeautifulStoneSoup(open(xml_file_name, 'r'), convertEntities=BeautifulSto
 trackers = soup.document.find('trackers', recursive=False).findAll('tracker', recursive=False)
 
 from urllib import urlencode
-from urllib2 import Request, urlopen
+from urllib2 import Request, urlopen, HTTPError
 from base64 import b64encode
 from time import sleep
 from getpass import getpass
 import re
 
-def rest_call(before, after, data_dict=None):
-    global github_user, github_password
+def __rest_call_unchecked(before, after, data_dict=None):
+    global github_repo, github_user, github_password
     url = 'https://github.com/api/v2/xml/%s/%s/%s' % (before, github_repo, after)
     if data_dict is None:
         data = None
@@ -46,6 +46,29 @@ def rest_call(before, after, data_dict=None):
     # GitHub limits API calls to 60 per minute
     sleep(1)
     return response
+
+def rest_call(before, after, data_dict=None):
+    count500err = 0
+    while True:
+        try:
+            return __rest_call_unchecked(before, after, data_dict)
+        except HTTPError, e:
+            print "Got HTTPError:", e
+            l = data_dict and max(map(len, data_dict.itervalues())) or 0
+            if e.code == 413 or l >= 100000: # Request Entity Too Large
+                assert l > 0
+                print "Longest value has len", l, "; now we are trying with half of that"
+                l /= 2
+                data_dict = dict(map(lambda (k,v): (k,v[0:l]), data_dict.iteritems()))
+                continue
+            elif e.code == 500:
+                N = 5
+                if count500err >= N: raise e
+                print "Waiting 10 seconds, will try", (N - count500err), "more times"
+                sleep(10)
+                count500err += 1
+                continue
+            raise e # reraise, we cannot handle it
 
 def labelify(string):
     return re.sub(r'[^a-z0-9._-]+', '-', string.lower())
@@ -70,15 +93,7 @@ for category in tracker.categories('category', recursive=False):
     categories[category.id.string] = category.category_name.string
 print "categories:", categories
 
-started = opts.start_id is None
 def handle_tracker_item(item, issue_title_prefix):
-    global started
-    if not started:
-        if item.id.string == opts.start_id:
-            started = True
-        else:
-            return
-
     if len(issue_title_prefix) > 0:
         issue_title_prefix = issue_title_prefix.strip() + " "
         
@@ -105,7 +120,7 @@ def handle_tracker_item(item, issue_title_prefix):
             followup.details.string,
         ]))
 
-    print 'Creating: %s [%s] (%d comments)%s' % (title, ','.join(labels), len(comments), ' (closed)' if closed else '')
+    print 'Creating: %s [%s] (%d comments)%s for SF #%s' % (title, ','.join(labels), len(comments), ' (closed)' if closed else '', item.id.string)
     response = rest_call('issues/open', '', {'title': title, 'body': body})
     issue = BeautifulStoneSoup(response, convertEntities=BeautifulStoneSoup.ALL_ENTITIES)
     number = issue.number.string
@@ -113,7 +128,7 @@ def handle_tracker_item(item, issue_title_prefix):
         print 'Attaching label: %s' % label
         rest_call('issues/label/add', '%s/%s' % (label, number))
     for comment in comments:
-        print 'Creating comment: %s' % comment[:50].replace('\n', ' ')
+        print 'Creating comment: %s' % comment[:50].replace('\n', ' ').replace(chr(13), '')
         rest_call('issues/comment', number, {'comment': comment})
     if closed:
         print 'Closing...'
@@ -187,6 +202,8 @@ def getIssueTitlePrefix(trackername):
                 break
     return prefix
 
+skipped_count = 0
+started = opts.start_id is None
 items = []
 for tracker in trackers:
     trackeritems = tracker.tracker_items('tracker_item', recursive=False)
@@ -197,11 +214,18 @@ for tracker in trackers:
     
     issue_title_prefix = None
     for item in trackeritems:
+        if not started:
+            if item.id.string == opts.start_id:
+                started = True
+            else:
+                skipped_count += 1
+                continue
+
         if issue_title_prefix is None:
             issue_title_prefix = getIssueTitlePrefix(trackername)
         items.append((item, issue_title_prefix))
 
-print "Found", len(items), "items in", len(trackers), "trackers."
+print "Found", len(items), "items (" + str(skipped_count) + " skipped) in", len(trackers), "trackers."
 
 userVerify("Everything ok, should I really start?")
 github_password = getpass('%s\'s GitHub password: ' % github_user)
