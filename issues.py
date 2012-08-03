@@ -25,33 +25,31 @@ soup = BeautifulStoneSoup(open(xml_file_name, 'r'), convertEntities=BeautifulSto
 trackers = soup.document.find('trackers', recursive=False).findAll('tracker', recursive=False)
 
 from urllib import urlencode
-from urllib2 import Request, urlopen, HTTPError
+from urllib2 import HTTPError
 from base64 import b64encode
 from time import sleep
 from getpass import getpass
+import requests
+from requests.auth import HTTPBasicAuth
+import json
 import re
 
-def __rest_call_unchecked(before, after, data_dict=None):
+def __rest_call_unchecked(method, request, data=None):
     global github_repo, github_user, github_password
-    url = 'https://github.com/api/v2/xml/%s/%s/%s' % (before, github_repo, after)
-    if data_dict is None:
-        data = None
+    url = 'https://api.github.com/repos/%s/%s' % (github_repo, request)
+    if method == 'PATCH':
+        response = requests.patch(url, data=json.dumps(data), auth=HTTPBasicAuth(github_user, github_password))
     else:
-        data = urlencode([(unicode(key).encode('utf-8'), unicode(value).encode('utf-8')) for key, value in data_dict.iteritems()])
-    headers = {
-        'Authorization': 'Basic %s' % b64encode('%s:%s' % (github_user, github_password)),
-    }
-    request = Request(url, data, headers)
-    response = urlopen(request)
+        response = requests.post(url, data=json.dumps(data), auth=HTTPBasicAuth(github_user, github_password))
     # GitHub limits API calls to 60 per minute
     sleep(1)
     return response
 
-def rest_call(before, after, data_dict=None):
+def rest_call(method, request, data=None):
     count500err = 0
     while True:
         try:
-            return __rest_call_unchecked(before, after, data_dict)
+            return __rest_call_unchecked(method, request, data)
         except HTTPError, e:
             print "Got HTTPError:", e
             l = data_dict and max(map(len, data_dict.itervalues())) or 0
@@ -121,18 +119,20 @@ def handle_tracker_item(item, issue_title_prefix):
         ]))
 
     print 'Creating: %s [%s] (%d comments)%s for SF #%s' % (title, ','.join(labels), len(comments), ' (closed)' if closed else '', item.id.string)
-    response = rest_call('issues/open', '', {'title': title, 'body': body})
-    issue = BeautifulStoneSoup(response, convertEntities=BeautifulStoneSoup.ALL_ENTITIES)
-    number = issue.number.string
-    for label in labels:
-        print 'Attaching label: %s' % label
-        rest_call('issues/label/add', '%s/%s' % (label, number))
-    for comment in comments:
-        print 'Creating comment: %s' % comment[:50].replace('\n', ' ').replace(chr(13), '')
-        rest_call('issues/comment', number, {'comment': comment})
-    if closed:
-        print 'Closing...'
-        rest_call('issues/close', number)
+    response = rest_call('POST', 'issues', {'title': title, 'body': body})
+    if response.status_code == 500:
+        print "ISSUE CAUSED SERVER SIDE ERROR AND WAS NOT SAVED!!! Import will continue."
+    else:
+        issue = response.json
+        number = issue['number']
+        print 'Attaching labels: %s' % labels
+        rest_call('POST', 'issues/%s/labels' % (number), labels)
+        for comment in comments:
+            print 'Creating comment: %s' % comment[:50].replace('\n', ' ').replace(chr(13), '')
+            rest_call('POST', 'issues/%s/comments' % (number), {'body': comment})
+        if closed:
+            print 'Closing...'
+            rest_call('PATCH', 'issues/%s' % (number), {'state': 'closed'})
 
 
 import signal
