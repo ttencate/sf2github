@@ -8,6 +8,7 @@ import optparse
 
 parser = optparse.OptionParser(usage='Usage: %prog [options] sfexport.xml githubuser/repo')
 parser.add_option('-s', '--start', dest='start_id', action='store', help='id of first issue to import; useful for aborted runs')
+parser.add_option('-u', '--user', dest='github_user')
 opts, args = parser.parse_args()
 
 try:
@@ -16,6 +17,9 @@ try:
 except (ValueError, IndexError):
     parser.print_help()
     sys.exit(1)
+
+if opts.github_user:
+    github_user = opts.github_user
 
 from BeautifulSoup import BeautifulStoneSoup
 
@@ -124,6 +128,8 @@ def handle_tracker_item(item, issue_title_prefix):
         print "ISSUE CAUSED SERVER SIDE ERROR AND WAS NOT SAVED!!! Import will continue."
     else:
         issue = response.json
+        if 'number' not in issue:
+            raise RuntimeError("No 'number' in issue; response %d invalid" % response.status_code)
         number = issue['number']
         print 'Attaching labels: %s' % labels
         rest_call('POST', 'issues/%s/labels' % (number), labels)
