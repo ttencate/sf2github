@@ -199,7 +199,7 @@ def getIssueTitlePrefix(trackername):
         return prefixes[trackername]
     
     prefix = "[" + trackername + "]"
-    if not userVerify("Tracker '" + trackername + "' is unknown,"
+    if not userVerify("Tracker '" + trackername + "' is unknown, "
         + "I would use the prefix '" + prefix + "', ok?", False):
         
         while True:
@@ -214,7 +214,7 @@ items = []
 for tracker in trackers:
     trackeritems = tracker.tracker_items('tracker_item', recursive=False)
     trackername = tracker.description.string
-    print "Found tracker:", trackername, ",", len(trackeritems), "items"
+    print "Found tracker:", trackername, ", ", len(trackeritems), "items"
     trackername = trackername.replace("Tracking System", "")
     trackername = trackername.strip()
     
