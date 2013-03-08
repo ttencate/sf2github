@@ -127,7 +127,7 @@ def handle_tracker_item(item, issue_title_prefix):
     if response.status_code == 500:
         print "ISSUE CAUSED SERVER SIDE ERROR AND WAS NOT SAVED!!! Import will continue."
     else:
-        issue = response.json
+        issue = response.json()
         if 'number' not in issue:
             raise RuntimeError("No 'number' in issue; response %d invalid" % response.status_code)
         number = issue['number']
