@@ -28,9 +28,6 @@ soup = BeautifulStoneSoup(open(xml_file_name, 'r'), convertEntities=BeautifulSto
 
 trackers = soup.document.find('trackers', recursive=False).findAll('tracker', recursive=False)
 
-from urllib import urlencode
-from urllib2 import HTTPError
-from base64 import b64encode
 from time import sleep
 from getpass import getpass
 import requests
@@ -53,7 +50,7 @@ def rest_call(method, request, data=None):
     while True:
         try:
             return __rest_call_unchecked(method, request, data)
-        except HTTPError, e:
+        except requests.HTTPError, e:
             print "Got HTTPError:", e
             l = data_dict and max(map(len, data_dict.itervalues())) or 0
             if e.code == 413 or l >= 100000: # Request Entity Too Large
