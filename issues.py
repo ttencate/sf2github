@@ -28,13 +28,9 @@ soup = BeautifulStoneSoup(open(xml_file_name, 'r'), convertEntities=BeautifulSto
 
 trackers = soup.document.find('trackers', recursive=False).findAll('tracker', recursive=False)
 
-from urllib import urlencode
-from urllib2 import HTTPError
-from base64 import b64encode
 from time import sleep
 from getpass import getpass
 import requests
-from requests.auth import HTTPBasicAuth
 import json
 import re
 
@@ -42,9 +38,9 @@ def __rest_call_unchecked(method, request, data=None):
     global github_repo, github_user, github_password
     url = 'https://api.github.com/repos/%s/%s' % (github_repo, request)
     if method == 'PATCH':
-        response = requests.patch(url, data=json.dumps(data), auth=HTTPBasicAuth(github_user, github_password))
+        response = requests.patch(url, data=json.dumps(data), auth=(github_user, github_password))
     else:
-        response = requests.post(url, data=json.dumps(data), auth=HTTPBasicAuth(github_user, github_password))
+        response = requests.post(url, data=json.dumps(data), auth=(github_user, github_password))
     # GitHub limits API calls to 60 per minute
     sleep(1)
     return response
@@ -54,7 +50,7 @@ def rest_call(method, request, data=None):
     while True:
         try:
             return __rest_call_unchecked(method, request, data)
-        except HTTPError, e:
+        except requests.HTTPError, e:
             print "Got HTTPError:", e
             l = data_dict and max(map(len, data_dict.itervalues())) or 0
             if e.code == 413 or l >= 100000: # Request Entity Too Large
