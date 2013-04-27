@@ -26,7 +26,7 @@ from BeautifulSoup import BeautifulStoneSoup
 print 'Parsing XML export...'
 soup = BeautifulStoneSoup(open(xml_file_name, 'r'), convertEntities=BeautifulStoneSoup.ALL_ENTITIES)
 
-trackers = soup.document.find('trackers', recursive=False).findAll('tracker', recursive=False)
+trackers = soup.project_export.find('artifacts', recursive=False).findAll('artifact', recursive=False)
 
 from time import sleep
 from getpass import getpass
@@ -73,52 +73,60 @@ def labelify(string):
 
 closed_status_ids = set()
 for tracker in trackers:
-    for status in tracker.statuses('status', recursive=False):
-        status_id = status.id.string
-        status_name = status.nameTag.string
-        if status_name in ['Closed', 'Deleted']:
-            closed_status_ids.add(status_id)
+    status = tracker.find('field',attrs={'name':'status'})
+    status_id = status.parent.find('field',attrs={'name':'artifact_id'}).string
+    status_name = status.string
+    if status_name in ['Closed', 'Deleted']:
+        closed_status_ids.add(status_id)
 print "closed_status_ids:", closed_status_ids
 
-groups = {}
+groups = set()
 for tracker in trackers:
-    for group in tracker.groups('group', recursive=False):
-        groups[group.id.string] = group.group_name.string
+    group = tracker.find('field',attrs={'name':'artifact_type'})
+    groups.add(group.string)
 print "groups:", groups
 
-categories = {}
-for category in tracker.categories('category', recursive=False):
-    categories[category.id.string] = category.category_name.string
+categories = set()
+for tracker in trackers:
+    category = tracker.find('field',attrs={'name':'category'})
+    categories.add(category.string)
 print "categories:", categories
 
 def handle_tracker_item(item, issue_title_prefix):
     if len(issue_title_prefix) > 0:
         issue_title_prefix = issue_title_prefix.strip() + " "
-        
-    title = issue_title_prefix + item.summary.string
+
+    title = issue_title_prefix + item.find('field',attrs={'name':'summary'}).string
+    item_id = item.find('field',attrs={'name':'artifact_id'}).string
+    item_submitter = item.find('field',attrs={'name':'submitted_by'}).string
+    item_details = item.find('field',attrs={'name':'details'}).string
     body = '\n\n'.join([
-        'Converted from [SourceForge issue %s](%s), submitted by %s' % (item.id.string, item.url.string, item.submitter.string),
-        item.details.string,
+        'Converted from [SourceForge issue %s], submitted by %s' % (item_id, item_submitter),
+        item_details,
     ])
-    closed = item.status_id.string in closed_status_ids
+    closed = item_id in closed_status_ids
     labels = []
     try:
-        labels.append(labelify(groups[item.group_id.string]))
+        labels.append(labelify(item.find('field',attrs={'name':'artifact_id'}).string))
     except KeyError:
         pass
     try:
-        labels.append(labelify(categories[item.category_id.string]))
+        labels.append(labelify(item.find('field',attrs={'name':'category'}).string))
     except KeyError:
         pass
 
     comments = []
-    for followup in item.followups('followup', recursive=False):
+    messages = item.findAll('message',recursive=True)
+    for followup in messages:
+        # workaround BeautifulSoup parsing error (?)
+        if len(followup.findAll('field')) == 0:
+          continue
         comments.append('\n\n'.join([
-            'Submitted by %s' % followup.submitter.string,
-            followup.details.string,
+            'Submitted by %s' % followup.find('field',attrs={'name':'user_name'}).string,
+            followup.find('field',attrs={'name':'body'}).string,
         ]))
 
-    print 'Creating: %s [%s] (%d comments)%s for SF #%s' % (title, ','.join(labels), len(comments), ' (closed)' if closed else '', item.id.string)
+    print 'Creating: %s [%s] (%d comments)%s for SF #%s' % (title, ','.join(labels), len(comments), ' (closed)' if closed else '', item_id)
     response = rest_call('POST', 'issues', {'title': title, 'body': body})
     if response.status_code == 500:
         print "ISSUE CAUSED SERVER SIDE ERROR AND WAS NOT SAVED!!! Import will continue."
@@ -186,7 +194,7 @@ def userVerify(txt, abortOnFail=True):
 
 def getIssueTitlePrefix(trackername):
     prefixes = {
-        "Bug": "",
+        "Bugs": "",
         "Feature Request": "[Feature]",
         "Patch": "[Patch]",
         "Tech Support": "[Support]"
@@ -208,24 +216,21 @@ skipped_count = 0
 started = opts.start_id is None
 items = []
 for tracker in trackers:
-    trackeritems = tracker.tracker_items('tracker_item', recursive=False)
-    trackername = tracker.description.string
-    print "Found tracker:", trackername, ", ", len(trackeritems), "items"
+    trackername = tracker.find('field',attrs={'name':'artifact_type'}).string
     trackername = trackername.replace("Tracking System", "")
     trackername = trackername.strip()
     
     issue_title_prefix = None
-    for item in trackeritems:
-        if not started:
-            if item.id.string == opts.start_id:
-                started = True
-            else:
-                skipped_count += 1
-                continue
+    if not started:
+        if tracker.find('field',attrs={'name':'artifact_id'}).string == opts.start_id:
+            started = True
+        else:
+            skipped_count += 1
+            continue
 
-        if issue_title_prefix is None:
-            issue_title_prefix = getIssueTitlePrefix(trackername)
-        items.append((item, issue_title_prefix))
+    if issue_title_prefix is None:
+        issue_title_prefix = getIssueTitlePrefix(trackername)
+    items.append((tracker, issue_title_prefix))
 
 print "Found", len(items), "items (" + str(skipped_count) + " skipped) in", len(trackers), "trackers."
 
