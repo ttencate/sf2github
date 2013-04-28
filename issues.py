@@ -21,12 +21,13 @@ except (ValueError, IndexError):
 if opts.github_user:
     github_user = opts.github_user
 
-from BeautifulSoup import BeautifulStoneSoup
+from bs4 import BeautifulSoup
 
 print 'Parsing XML export...'
-soup = BeautifulStoneSoup(open(xml_file_name, 'r'), convertEntities=BeautifulStoneSoup.ALL_ENTITIES)
+soup = BeautifulSoup(open(xml_file_name, 'r'), ['lxml'])
+#convertEntities=BeautifulStoneSoup.ALL_ENTITIES)
 
-trackers = soup.project_export.find('artifacts', recursive=False).findAll('artifact', recursive=False)
+trackers = soup.find_all('artifact')
 
 from time import sleep
 from getpass import getpass
@@ -121,7 +122,7 @@ def handle_tracker_item(item, issue_title_prefix):
         # workaround BeautifulSoup parsing error (?)
         if len(followup.findAll('field')) == 0:
           continue
-        comments.append('\n\n'.join([
+        comments.insert(0,'\n\n'.join([
             'Submitted by %s' % followup.find('field',attrs={'name':'user_name'}).string,
             followup.find('field',attrs={'name':'body'}).string,
         ]))
