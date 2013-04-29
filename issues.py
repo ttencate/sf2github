@@ -98,7 +98,7 @@ def handle_tracker_item(item, issue_title_prefix):
     if len(issue_title_prefix) > 0:
         issue_title_prefix = issue_title_prefix.strip() + " "
 
-    title = issue_title_prefix + item.find('field',attrs={'name':'summary'}).string
+    title = item.find('field',attrs={'name':'summary'}).string
     item_id = item.find('field',attrs={'name':'artifact_id'}).string
     item_submitter = item.find('field',attrs={'name':'submitted_by'}).string
     item_details = item.find('field',attrs={'name':'details'}).string
@@ -110,6 +110,9 @@ def handle_tracker_item(item, issue_title_prefix):
     closed = item_id in closed_status_ids
     labels = []
     try:
+        if "Feature" in issue_title_prefix:
+          labels.append("enhancement")
+        labels.append("import")
         labels.append(labelify("sf#"+item_id))
     except KeyError:
         pass
