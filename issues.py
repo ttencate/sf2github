@@ -112,7 +112,9 @@ def handle_tracker_item(item, issue_title_prefix):
     except KeyError:
         pass
     try:
-        labels.append(labelify(item.find('field',attrs={'name':'category'}).string))
+        category = labelify(item.find('field',attrs={'name':'category'}).string)
+        if category != "none":
+          labels.append(category)
     except KeyError:
         pass
 
