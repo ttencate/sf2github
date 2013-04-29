@@ -22,6 +22,7 @@ if opts.github_user:
     github_user = opts.github_user
 
 from bs4 import BeautifulSoup
+from datetime import datetime
 
 print 'Parsing XML export...'
 soup = BeautifulSoup(open(xml_file_name, 'r'), ['lxml'])
@@ -101,14 +102,15 @@ def handle_tracker_item(item, issue_title_prefix):
     item_id = item.find('field',attrs={'name':'artifact_id'}).string
     item_submitter = item.find('field',attrs={'name':'submitted_by'}).string
     item_details = item.find('field',attrs={'name':'details'}).string
+    item_date = datetime.fromtimestamp(float(item.find('field',attrs={'name':'open_date'}).string))
     body = '\n\n'.join([
-        'Converted from [SourceForge issue %s], submitted by %s' % (item_id, item_submitter),
+        'Submitted by %s on %s' % (item_submitter, str(item_date)),
         item_details,
     ])
     closed = item_id in closed_status_ids
     labels = []
     try:
-        labels.append(labelify(item.find('field',attrs={'name':'artifact_id'}).string))
+        labels.append(labelify("sf#"+item_id))
     except KeyError:
         pass
     try:
@@ -121,15 +123,13 @@ def handle_tracker_item(item, issue_title_prefix):
     comments = []
     messages = item.findAll('message',recursive=True)
     for followup in messages:
-        # workaround BeautifulSoup parsing error (?)
-        if len(followup.findAll('field')) == 0:
-          continue
+        commentdate = datetime.fromtimestamp(float(followup.find('field',attrs={'name':'adddate'}).string))
         comments.insert(0,'\n\n'.join([
-            'Submitted by %s' % followup.find('field',attrs={'name':'user_name'}).string,
+            'Submitted by %s on %s' % (followup.find('field',attrs={'name':'user_name'}).string,str(commentdate)),
             followup.find('field',attrs={'name':'body'}).string,
         ]))
 
-    print 'Creating: %s [%s] (%d comments)%s for SF #%s' % (title, ','.join(labels), len(comments), ' (closed)' if closed else '', item_id)
+    print 'Creating: %s [%s] (%d comments)%s for SF #%s from %s' % (title, ','.join(labels), len(comments), ' (closed)' if closed else '', item_id, item_date)
     response = rest_call('POST', 'issues', {'title': title, 'body': body})
     if response.status_code == 500:
         print "ISSUE CAUSED SERVER SIDE ERROR AND WAS NOT SAVED!!! Import will continue."
