@@ -112,6 +112,14 @@ def handle_tracker_item(item, issue_title_prefix):
     try:
         if "Feature" in issue_title_prefix:
           labels.append("enhancement")
+        if "Bug" in issue_title_prefix:
+	  labels.append("bug")
+        if "Patch" in issue_title_prefix:
+          labels.append("patch")
+          labels.append("enhancement")
+        if "Support" in issue_title_prefix:
+          labels.append("question")
+
         labels.append("import")
         labels.append(labelify("sf#"+item_id))
     except KeyError:
@@ -200,9 +208,11 @@ def userVerify(txt, abortOnFail=True):
 
 def getIssueTitlePrefix(trackername):
     prefixes = {
-        "Bugs": "",
+        "Bugs": "[Bug]",
         "Feature Request": "[Feature]",
         "Patch": "[Patch]",
+        "Patches": "[Patch]",
+        "Support Requests": "[Support]",
         "Tech Support": "[Support]"
         }
     if trackername in prefixes:
