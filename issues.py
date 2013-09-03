@@ -278,7 +278,21 @@ for tracker in trackers:
         issue_title_prefix = getIssueTitlePrefix(trackername)
     items.append((tracker, issue_title_prefix))
 
+def item_sorting_key(itemtuple):
+    latest = int(itemtuple[0].find('field',attrs={'name':'open_date'}).string)
+
+    messages = itemtuple[0].findAll('message',recursive=True)
+    for followup in messages:
+        commentdate = int(followup.find('field',attrs={'name':'adddate'}).string)
+        if commentdate > latest:
+                latest = commentdate
+    
+    return latest
+
+
 print "Found", len(items), "items (" + str(skipped_count) + " skipped) in", len(trackers), "trackers."
+print "Sorting items..."
+items.sort(key=item_sorting_key)
 
 userVerify("Everything ok, should I really start?")
 github_password = getpass('%s\'s GitHub password: ' % github_user)
