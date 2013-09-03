@@ -103,7 +103,7 @@ def cleanup_message_body(body):
         return body
 
 
-def handle_tracker_item(item, issue_title_prefix):
+def handle_tracker_item(item, issue_title_prefix, statusprintprefix):
     if len(issue_title_prefix) > 0:
         issue_title_prefix = issue_title_prefix.strip() + " "
 
@@ -169,7 +169,7 @@ def handle_tracker_item(item, issue_title_prefix):
             cleanup_message_body(followup.find('field',attrs={'name':'body'}).string),
         ]))
 
-    print 'Creating: %s [%s] (%d comments)%s for SF #%s from %s' % (title, ','.join(labels), len(comments), ' (closed)' if closed else '', item_id, item_date)
+    print statusprintprefix+ 'Creating: %s [%s] (%d comments)%s for SF #%s from %s' % (title, ','.join(labels), len(comments), ' (closed)' if closed else '', item_id, item_date)
     response = rest_call('POST', 'issues', {'title': title, 'body': body})
     if response.status_code == 500:
         print "ISSUE CAUSED SERVER SIDE ERROR AND WAS NOT SAVED!!! Import will continue."
@@ -178,13 +178,13 @@ def handle_tracker_item(item, issue_title_prefix):
         if 'number' not in issue:
             raise RuntimeError("No 'number' in issue; response %d invalid" % response.status_code)
         number = issue['number']
-        print 'Attaching labels: %s' % labels
+        print statusprintprefix + 'Attaching labels: %s' % labels
         rest_call('POST', 'issues/%s/labels' % (number), labels)
         for comment in comments:
-            print 'Creating comment: %s' % comment[:50].replace('\n', ' ').replace(chr(13), '')
+            print statusprintprefix + 'Creating comment: %s' % comment[:50].replace('\n', ' ').replace(chr(13), '')
             rest_call('POST', 'issues/%s/comments' % (number), {'body': comment})
         if closed:
-            print 'Closing...'
+            print statusprintprefix + 'Closing...'
             rest_call('PATCH', 'issues/%s' % (number), {'state': 'closed'})
 
 
@@ -296,6 +296,10 @@ items.sort(key=item_sorting_key)
 
 userVerify("Everything ok, should I really start?")
 github_password = getpass('%s\'s GitHub password: ' % github_user)
+
+n_items=len(items)
+count=1
 for item, issue_title_prefix in items:
-    handle_tracker_item(item, issue_title_prefix)
+    handle_tracker_item(item, issue_title_prefix, "[%3d%% (%d/%d)] " % (100*count/n_items,count,n_items))
+    count=count+1
     
