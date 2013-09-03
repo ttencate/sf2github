@@ -110,6 +110,26 @@ def handle_tracker_item(item, issue_title_prefix):
     closed = item_id in closed_status_ids
     title=title+" [sf#%s]" % (item_id,)
     labels = []
+
+    try:
+        item_resolution = item.find('field',attrs={'name':'resolution'}).string
+        if "Duplicate" in item_resolution:
+                labels.append("duplicate")
+        if "Invalid" in item_resolution:
+                labels.append("invalid")
+        if "Later" in item_resolution:
+                labels.append("later")
+        if "Out of Date" in item_resolution:
+                labels.append("outofdate")
+        if "Remind" in item_resolution:
+                labels.append("remind")
+        if "Wont Fix" in item_resolution:
+                labels.append("wontfix")
+        if "Works For Me" in item_resolution:
+                labels.append("worksforme")
+    except:
+        pass
+
     try:
         if "Feature" in issue_title_prefix:
           labels.append("enhancement")
