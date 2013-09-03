@@ -108,6 +108,7 @@ def handle_tracker_item(item, issue_title_prefix):
         item_details,
     ])
     closed = item_id in closed_status_ids
+    title=title+" [sf#%s]" % (item_id,)
     labels = []
     try:
         if "Feature" in issue_title_prefix:
@@ -121,7 +122,6 @@ def handle_tracker_item(item, issue_title_prefix):
           labels.append("question")
 
         labels.append("import")
-        labels.append(labelify("sf#"+item_id))
     except KeyError:
         pass
     try:
