@@ -230,6 +230,7 @@ def getIssueTitlePrefix(trackername):
     prefixes = {
         "Bugs": "[Bug]",
         "Feature Request": "[Feature]",
+        "Feature Requests": "[Feature]",
         "Patch": "[Patch]",
         "Patches": "[Patch]",
         "Support Requests": "[Support]",
