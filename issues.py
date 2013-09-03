@@ -1,5 +1,7 @@
 #!/usr/bin/env python
 
+import re
+
 import better_exchook
 better_exchook.install()
 
@@ -94,6 +96,13 @@ for tracker in trackers:
     categories.add(category.string)
 print "categories:", categories
 
+def cleanup_message_body(body):
+        body=re.sub("Logged In: (YES|NO) *\\n", "", body)
+        body=re.sub("user_id=[0-9]+ *\\n", "", body)
+        body=re.sub("Originator: (YES|NO) *\\n", "", body)
+        return body
+
+
 def handle_tracker_item(item, issue_title_prefix):
     if len(issue_title_prefix) > 0:
         issue_title_prefix = issue_title_prefix.strip() + " "
@@ -157,7 +166,7 @@ def handle_tracker_item(item, issue_title_prefix):
         commentdate = datetime.fromtimestamp(float(followup.find('field',attrs={'name':'adddate'}).string))
         comments.insert(0,'\n\n'.join([
             'Submitted by %s on %s' % (followup.find('field',attrs={'name':'user_name'}).string,str(commentdate)),
-            followup.find('field',attrs={'name':'body'}).string,
+            cleanup_message_body(followup.find('field',attrs={'name':'body'}).string),
         ]))
 
     print 'Creating: %s [%s] (%d comments)%s for SF #%s from %s' % (title, ','.join(labels), len(comments), ' (closed)' if closed else '', item_id, item_date)
