@@ -1,5 +1,18 @@
 #!/usr/bin/env python
 
+
+
+userdict = {
+        # provide your sourceforge -> github user name mappings here.
+        # syntax:
+        # "old_sf_user": "NewGitHubUser",
+        # "another": "line",
+        # "last": "line"
+}
+
+
+#######################################################################
+
 import re
 
 import better_exchook
@@ -8,7 +21,7 @@ better_exchook.install()
 import sys
 import optparse
 
-parser = optparse.OptionParser(usage='Usage: %prog [options] sfexport.xml githubuser/repo')
+parser = optparse.OptionParser(usage='Usage: %prog [options] sfexport.xml githubuser/repo\n\tYou might want to edit %prog with a text editor and set\n\tup the userdict = {...} accordingly, for mapping user names.')
 parser.add_option('-s', '--start', dest='start_id', action='store', help='id of first issue to import; useful for aborted runs')
 parser.add_option('-u', '--user', dest='github_user')
 opts, args = parser.parse_args()
@@ -169,8 +182,18 @@ def handle_tracker_item(item, issue_title_prefix, statusprintprefix):
             cleanup_message_body(followup.find('field',attrs={'name':'body'}).string),
         ]))
 
-    print statusprintprefix+ 'Creating: %s [%s] (%d comments)%s for SF #%s from %s' % (title, ','.join(labels), len(comments), ' (closed)' if closed else '', item_id, item_date)
-    response = rest_call('POST', 'issues', {'title': title, 'body': body, 'labels': labels})
+    assignee_sf = item.find('field',attrs={'name':'assigned_to'}).string.strip().lower()
+    if assignee_sf == "nobody":
+        assignee = None
+    else:
+        try:
+            assignee = userdict[assignee_sf]
+        except KeyError: # not in dict
+            print "Warning: could not convert original assignee '%s': Not found in userdict." % assignee_sf
+            assignee = None
+
+    print statusprintprefix+ 'Creating: %s [%s] (%d comments)%s for SF #%s from %s, assigned to %s' % (title, ','.join(labels), len(comments), ' (closed)' if closed else '', item_id, item_date, assignee)
+    response = rest_call('POST', 'issues', {'title': title, 'body': body, 'labels': labels, 'assignee': assignee})
     if response.status_code == 500:
         print "ISSUE CAUSED SERVER SIDE ERROR AND WAS NOT SAVED!!! Import will continue."
     else:
