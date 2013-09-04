@@ -170,7 +170,7 @@ def handle_tracker_item(item, issue_title_prefix, statusprintprefix):
         ]))
 
     print statusprintprefix+ 'Creating: %s [%s] (%d comments)%s for SF #%s from %s' % (title, ','.join(labels), len(comments), ' (closed)' if closed else '', item_id, item_date)
-    response = rest_call('POST', 'issues', {'title': title, 'body': body})
+    response = rest_call('POST', 'issues', {'title': title, 'body': body, 'labels': labels})
     if response.status_code == 500:
         print "ISSUE CAUSED SERVER SIDE ERROR AND WAS NOT SAVED!!! Import will continue."
     else:
@@ -178,8 +178,6 @@ def handle_tracker_item(item, issue_title_prefix, statusprintprefix):
         if 'number' not in issue:
             raise RuntimeError("No 'number' in issue; response %d invalid" % response.status_code)
         number = issue['number']
-        print statusprintprefix + 'Attaching labels: %s' % labels
-        rest_call('POST', 'issues/%s/labels' % (number), labels)
         for comment in comments:
             print statusprintprefix + 'Creating comment: %s' % comment[:50].replace('\n', ' ').replace(chr(13), '')
             rest_call('POST', 'issues/%s/comments' % (number), {'body': comment})
