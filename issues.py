@@ -21,9 +21,10 @@ better_exchook.install()
 import sys
 import optparse
 
-parser = optparse.OptionParser(usage='Usage: %prog [options] sfexport.xml githubuser/repo\n\tYou might want to edit %prog with a text editor and set\n\tup the userdict = {...} accordingly, for mapping user names.')
+parser = optparse.OptionParser(usage='Usage: %prog [options] sfexport.xml repoowner/repo\n\tIf the -u option is not specified, repoowner will be used as\n\tusername.\n\tYou might want to edit %prog with a text editor and set\n\tup the userdict = {...} accordingly, for mapping user names.')
 parser.add_option('-s', '--start', dest='start_id', action='store', help='id of first issue to import; useful for aborted runs')
 parser.add_option('-u', '--user', dest='github_user')
+parser.add_option("-T", "--no-id-in-title", action="store_true", dest="no_id_in_title", help="do not append '[sf#12345]' to issue titles")
 opts, args = parser.parse_args()
 
 try:
@@ -35,6 +36,7 @@ except (ValueError, IndexError):
 
 if opts.github_user:
     github_user = opts.github_user
+
 
 from bs4 import BeautifulSoup
 from datetime import datetime
@@ -117,6 +119,8 @@ def cleanup_message_body(body):
 
 
 def handle_tracker_item(item, issue_title_prefix, statusprintprefix):
+    global no_id_in_title
+    
     if len(issue_title_prefix) > 0:
         issue_title_prefix = issue_title_prefix.strip() + " "
 
@@ -130,7 +134,8 @@ def handle_tracker_item(item, issue_title_prefix, statusprintprefix):
         item_details,
     ])
     closed = item_id in closed_status_ids
-    title=title+" [sf#%s]" % (item_id,)
+    if not no_id_in_title:
+        title=title+" [sf#%s]" % (item_id,)
     labels = []
 
     try:
@@ -149,14 +154,14 @@ def handle_tracker_item(item, issue_title_prefix, statusprintprefix):
                 labels.append("wontfix")
         if "Works For Me" in item_resolution:
                 labels.append("worksforme")
-    except:
+    except KeyError:
         pass
 
     try:
         if "Feature" in issue_title_prefix:
           labels.append("enhancement")
         if "Bug" in issue_title_prefix:
-	  labels.append("bug")
+          labels.append("bug")
         if "Patch" in issue_title_prefix:
           labels.append("patch")
           labels.append("enhancement")
