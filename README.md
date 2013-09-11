@@ -34,10 +34,9 @@ Limitations:
 * All issues and comments will be owned by the project's owner on GitHub,
   but mention the SF username of the original submitter.
 * Creation times will be the date of the import,
-  not the creation time from SourceForge.
-* There's some rubbish in the comment text sometimes
-  (Logged In, user_id, Originator)
-  but this is in the SF XML export.
+  not the creation time from SourceForge. (However, most recently updated
+  tracker items will be the most recently added ones after the import:
+  I.e., the ordering is preserved)
 
 Code migration
 --------------
@@ -49,8 +48,8 @@ http://help.github.com/svn-importing/
 Usage
 -----
 
-sf2github depends on the [BeautifulSoup](http://www.crummy.com/software/BeautifulSoup/)
-and the [requests](http://docs.python-requests.org/en/latest/) modules.
+sf2github depends on the [BeautifulSoup](http://www.crummy.com/software/BeautifulSoup/),
+the [requests](http://docs.python-requests.org/en/latest/) and the 're' modules.
 If you don't have them, install them first.
 
 From SourceForge, you need to export the tracker data in XML.
