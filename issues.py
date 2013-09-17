@@ -320,7 +320,13 @@ print "Found", len(items), "items (" + str(skipped_count) + " skipped) in", len(
 print "Sorting items..."
 items.sort(key=item_sorting_key)
 
-userVerify("Everything ok, should I really start?")
+userVerify(
+"""Everything OK. Note that GitHub will send out an email to every follower of the
+repository, for every issue and every comment created. If there are any
+followers, you should really warn them to unfollow the repo temporarily
+before starting the import.
+
+Should I start now?""")
 github_password = getpass('%s\'s GitHub password: ' % github_user)
 
 n_items=len(items)
