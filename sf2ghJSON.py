@@ -1,23 +1,32 @@
 #!/usr/bin/env python
 import json
-from pprint import pprint
+import milestone
 
 json_data=open('tickets.json')
 
 data = json.load(json_data)
 
 for d in data.keys():
-    pprint(d)
+    print(d)
 
-print("-----------------------------------------")
+##############
+# MILESTONES #
+##############
+print("-----------------")
 print("MILESTONES")
-print("-----------------------------------------")
-for key in data["milestones"][0]:
-    print(key)
+print("-----------------")
+sfMilestones = data["milestones"]
+githubMilestones = map(milestone.sf2github, sfMilestones)
 
+for m in githubMilestones:
+    print(m["title"])
+
+##############
+# TICKETS    #
+##############
 print("-----------------------------------------")
 print("TICKETS")
-print("-----------------------------------------")
+print("-----------------------------------------") 
 for key in data["tickets"][0]:
     print(key)
 
