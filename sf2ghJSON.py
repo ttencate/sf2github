@@ -19,14 +19,14 @@ sfMilestones = data["milestones"]
 githubMilestones = map(milestone.sf2github, sfMilestones)
 
 for m in githubMilestones:
-    print(m["title"])
+    print(m)
 
 ##############
 # TICKETS    #
 ##############
-print("-----------------------------------------")
+print("-----------------")
 print("TICKETS")
-print("-----------------------------------------") 
+print("-----------------") 
 for key in data["tickets"][0]:
     print(key)
 
