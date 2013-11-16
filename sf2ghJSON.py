@@ -12,11 +12,13 @@ for d in data.keys():
 print("-----------------------------------------")
 print("MILESTONES")
 print("-----------------------------------------")
-print(data["milestones"][0])
+for key in data["milestones"][0]:
+    print(key)
 
 print("-----------------------------------------")
 print("TICKETS")
 print("-----------------------------------------")
-pprint(data["tickets"][0])
+for key in data["tickets"][0]:
+    print(key)
 
 json_data.close()
