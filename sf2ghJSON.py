@@ -15,62 +15,31 @@ username  = "codeguru42"
 password = getpass('%s\'s GitHub password: ' % username)
 repo = "BBCTImport"
 
-##############
-# MILESTONES #
-##############
-print("-----------------")
-print("MILESTONES")
-print("-----------------")
+def createGitHubArtifact(sfName, githubName, conversionFunction):
+    print("-----------------")
+    print(githubName.upper())
+    print("-----------------")
 
-successes = 0
-failures = 0
-milestoneNums = {}
+    successes = 0
+    failures = 0
 
-for sfMilestone in data["milestones"]:
-    ghMilestone = milestone.sf2github(sfMilestone)
+    for sfArtifact in data[sfName]:
+        ghArtifact = conversionFunction(sfArtifact)
 
-    print("Adding milestone " + ghMilestone['title'] + "...")
-    response = requests.post(
-        'https://api.github.com/repos/' + username + '/' + repo + '/milestones',
-        data=json.dumps(ghMilestone),
-        auth=(username, password))
+        print("Adding " + githubName + " " + ghArtifact['title'] + "...")
+        response = requests.post(
+            'https://api.github.com/repos/' + username + '/' + repo + '/' + githubName,
+            data=json.dumps(ghArtifact),
+            auth=(username, password))
 
-    if response.status_code == 201:
-        successes += 1
-        milestoneNums[ghMilestone['title']] = response.json()['number']
-    else:
-        print(str(response.status_code) + ": " + response.json()['message'])
-        print(ghMilestone)
-        failures += 1
+        if response.status_code == 201:
+            successes += 1
+        else:
+            print(str(response.status_code) + ": " + response.json()['message'])
+            failures += 1
 
-total = successes + failures
-print("Milestones: " + str(total) + " Success: " + str(successes) + " Failure: " + str(failures))
+    total = successes + failures
+    print(githubName + ": " + str(total) + " Success: " + str(successes) + " Failure: " + str(failures))
 
-##############
-# TICKETS    #
-##############
-print("-----------------")
-print("TICKETS")
-print("-----------------")
-
-successes = 0
-failures = 0
-
-for sfTicket in data["tickets"]:
-    ghIssue = issue.sf2github(sfTicket)
-
-    print("Adding ticket " + ghIssue['title'] + "...")
-    response = requests.post(
-        'https://api.github.com/repos/' + username + '/' + repo + '/issues',
-        data=json.dumps(ghIssue),
-        auth=(username, password))
-
-    if response.status_code == 201:
-        successes += 1
-    else:
-        print(str(response.status_code) + ": " + response.json()['message'])
-        print(ghIssue)
-        failures += 1
-
-total = successes + failures
-print("Milestones: " + str(total) + " Success: " + str(successes) + " Failure: " + str(failures))
+createGitHubArtifact("milestones", "milestones", milestone.sf2github)
+createGitHubArtifact("tickets", "issues", issue.sf2github)
