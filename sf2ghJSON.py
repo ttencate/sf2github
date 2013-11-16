@@ -28,12 +28,12 @@ milestoneNums = {}
 
 for sfMilestone in data["milestones"]:
     ghMilestone = milestone.sf2github(sfMilestone)
+
+    print("Adding milestone " + ghMilestone['title'] + "...")
     response = requests.post(
         'https://api.github.com/repos/' + username + '/' + repo + '/milestones',
         data=json.dumps(ghMilestone),
         auth=(username, password))
-
-    print("Adding milestone " + ghMilestone['title'] + "...")
 
     if response.status_code == 201:
         successes += 1
@@ -46,13 +46,6 @@ for sfMilestone in data["milestones"]:
 total = successes + failures
 print("Milestones: " + str(total) + " Success: " + str(successes) + " Failure: " + str(failures))
 
-print(milestoneNums)
-response = requests.get(
-    'https://api.github.com/repos/' + username + '/' + repo + '/milestones/' + str(milestoneNums['lite 0.5.3.1']),
-    data=json.dumps(ghMilestone),
-    auth=(username, password))
-print(response.json())
-
 ##############
 # TICKETS    #
 ##############
@@ -60,5 +53,24 @@ print("-----------------")
 print("TICKETS")
 print("-----------------")
 
-sfTickets = data["tickets"]
-ghIssues = map(issue.sf2github, sfTickets)
+successes = 0
+failures = 0
+
+for sfTicket in data["tickets"]:
+    ghIssue = issue.sf2github(sfTicket)
+
+    print("Adding ticket " + ghIssue['title'] + "...")
+    response = requests.post(
+        'https://api.github.com/repos/' + username + '/' + repo + '/issues',
+        data=json.dumps(ghIssue),
+        auth=(username, password))
+
+    if response.status_code == 201:
+        successes += 1
+    else:
+        print(str(response.status_code) + ": " + response.json()['message'])
+        print(ghIssue)
+        failures += 1
+
+total = successes + failures
+print("Milestones: " + str(total) + " Success: " + str(successes) + " Failure: " + str(failures))
