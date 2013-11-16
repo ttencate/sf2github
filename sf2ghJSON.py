@@ -24,6 +24,7 @@ print("-----------------")
 
 successes = 0
 failures = 0
+milestoneNums = {}
 
 for sfMilestone in data["milestones"]:
     ghMilestone = milestone.sf2github(sfMilestone)
@@ -36,6 +37,7 @@ for sfMilestone in data["milestones"]:
 
     if response.status_code == 201:
         successes += 1
+        milestoneNums[ghMilestone['title']] = response.json()['number']
     else:
         print(str(response.status_code) + ": " + response.json()['message'])
         print(ghMilestone)
@@ -43,6 +45,13 @@ for sfMilestone in data["milestones"]:
 
 total = successes + failures
 print("Milestones: " + str(total) + " Success: " + str(successes) + " Failure: " + str(failures))
+
+print(milestoneNums)
+response = requests.get(
+    'https://api.github.com/repos/' + username + '/' + repo + '/milestones/' + str(milestoneNums['lite 0.5.3.1']),
+    data=json.dumps(ghMilestone),
+    auth=(username, password))
+print(response.json())
 
 ##############
 # TICKETS    #
