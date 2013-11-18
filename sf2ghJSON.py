@@ -9,7 +9,7 @@ import issue
 import optparse
 import sys
 
-parser = optparse.OptionParser(usage='Usage: %prog [options] <sfexport>.json <repoowner/repo>\n\tIf the -u option is not specified, repoowner will be used as\n\tusername.\n\tYou might want to edit %prog with a text editor and set\n\tup the userdict = {...} accordingly, for mapping user names.')
+parser = optparse.OptionParser(usage='Usage: %prog [options] <sfexport>.json <repoowner>/<repo>\n\tIf the -u option is not specified, repoowner will be used as\n\tusername.\n\tYou might want to edit %prog with a text editor and set\n\tup the userdict = {...} accordingly, for mapping user names.')
 parser.add_option('-s', '--start', dest='start_id', action='store', help='id of first issue to import; useful for aborted runs')
 parser.add_option('-u', '--user', dest='github_user')
 parser.add_option("-T", "--no-id-in-title", action="store_true", dest="no_id_in_title", help="do not append '[sf#12345]' to issue titles")

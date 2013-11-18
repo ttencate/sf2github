@@ -9,7 +9,7 @@ import milestone
 
 json_file=open('tickets.json')
 json_data = json.load(json_file)
-closedStatusNames = json_data['closed_status_names']
+
 json_file.close()
 
 # Get username and password
@@ -18,21 +18,57 @@ password = getpass('%s\'s GitHub password: ' % username)
 auth = (username, password)
 repo = "BBCTImport"
 
+print("Fetching milestones...")
 milestoneNumbers = milestone.getMilestoneNumbers(username, password, repo)
+print("Milestones: " + str(len(milestoneNumbers)))
 
-# Get first page of issues
-issueCount = 0
+###################
+#  UPDATE ISSUES  #
+###################
+print("Fetching tickets...")
+githubIssues = []
 url = 'https://api.github.com/repos/' + username + '/' + repo + '/issues'
 links = dict([('next', url)])
-
 while "next" in links:
     response = requests.get(links['next'], auth=auth)
+    if response.status_code == requests.codes.ok:
+        githubIssues.extend(response.json())
+    else:
+        print(str(response.status_code) + ": " + response.json()['message'])
+
     links = dict((rel, url) for url, rel in re.findall('<(.*?)>; rel="(.*?)"', response.headers['link']))
-    print(links)
 
-    githubIssues = response.json()
-    for issue in githubIssues:
-        pprint(issue['title'])
-        issueCount += 1
+print("Issues: " + str(len(githubIssues)))
 
-print("Issues: " + str(issueCount))
+sfTickets = json_data['tickets']
+closedStatusNames = json_data['closed_status_names']
+
+successes = 0
+failures = 0
+for issue in githubIssues:
+    print("Updating issue: " + issue['title'] + "...")
+
+    sfTicket = [ticket for ticket in sfTickets if ticket['summary'] == issue['title']][0]
+
+    updateData = {
+        'title' : issue['title']
+    }
+    milestone = sfTicket['custom_fields']['_milestone']
+    if milestone in milestoneNumbers:
+        updateData['milestone'] = milestoneNumbers[milestone]
+    assignedTo = sfTicket['assigned_to']
+    if assignedTo != "nobody":
+        updateData['assignee'] = assignedTo
+    status = sfTicket['status']
+    if status in closedStatusNames:
+        updateData['state'] = "closed"
+
+    response = requests.patch(issue['url'], data=json.dumps(updateData), auth=auth)
+    if response.status_code == requests.codes.ok:
+        successes += 1
+    else:
+        print(str(response.status_code) + ": " + response.json()['message'])
+        failures += 1
+
+issueCount = successes + failures
+print("Issues: " + str(issueCount) + " Sucess: " + str(successes) + " Failure: " + str(failures))
