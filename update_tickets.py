@@ -1,4 +1,16 @@
 #!/usr/bin/env python
+
+#######################################################################
+userdict = {
+    "codeguru" : "codeguru42"
+    # provide your sourceforge -> github user name mappings here.
+    # syntax:
+    # "old_sf_user": "NewGitHubUser",
+    # "another": "line",
+    # "last": "line"
+}
+#######################################################################
+
 import json
 import requests
 import re
@@ -58,7 +70,10 @@ for issue in githubIssues:
         updateData['milestone'] = milestoneNumbers[milestone]
     assignedTo = sfTicket['assigned_to']
     if assignedTo != "nobody":
-        updateData['assignee'] = assignedTo
+        if assignedTo in userdict:
+            updateData['assignee'] = userdict[assignedTo]
+        else:
+            updateData['assignee'] = assignedTo
     status = sfTicket['status']
     if status in closedStatusNames:
         updateData['state'] = "closed"
