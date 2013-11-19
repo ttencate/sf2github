@@ -12,8 +12,7 @@ userdict = {
 #######################################################################
 
 import json
-import requests
-import re
+from requests import codes
 from getpass import getpass
 from pprint import pprint
 
@@ -47,32 +46,15 @@ closedStatusNames = json_data['closed_status_names']
 
 successes = 0
 failures = 0
-for issue in githubIssues:
-    print("Updating issue: " + issue['title'] + "...")
+for githubIssue in githubIssues:
+    print("Updating issue: " + githubIssue['title'] + "...")
 
-    sfTicket = [ticket for ticket in sfTickets if ticket['summary'] == issue['title']][0]
-
-    updateData = {
-        'title' : issue['title']
-    }
-    milestone = sfTicket['custom_fields']['_milestone']
-    if milestone in milestoneNumbers:
-        updateData['milestone'] = milestoneNumbers[milestone]
-    assignedTo = sfTicket['assigned_to']
-    if assignedTo != "nobody":
-        if assignedTo in userdict:
-            updateData['assignee'] = userdict[assignedTo]
-        else:
-            updateData['assignee'] = assignedTo
-    status = sfTicket['status']
-    if status in closedStatusNames:
-        updateData['state'] = "closed"
-
-    response = requests.patch(issue['url'], data=json.dumps(updateData), auth=auth)
-    if response.status_code == requests.codes.ok:
+    sfTicket = [ticket for ticket in sfTickets if ticket['summary'] == githubIssue['title']][0]
+    (statusCode, message) = issue.updateIssue(githubIssue, sfTicket, auth, milestoneNumbers, userdict, closedStatusNames)
+    if statusCode == codes.ok:
         successes += 1
     else:
-        print(str(response.status_code) + ": " + response.json()['message'])
+        print(str(statusCode) + ": " + message)
         failures += 1
 
 issueCount = successes + failures
