@@ -1,11 +1,24 @@
+#######################################################################
+userdict = {
+    "codeguru" : "codeguru42"
+    # provide your sourceforge -> github user name mappings here.
+    # syntax:
+    # "old_sf_user": "NewGitHubUser",
+    # "another": "line",
+    # "last": "line"
+}
+#######################################################################
+
 import json
 import requests
 import re
 
-def sf2github(sfTickets):
+import milestone
+
+def sf2github(sfTicket):
     return {
-        'title' : sfTickets["summary"],
-        'body' : sfTickets["description"],
+        'title' : sfTicket["summary"],
+        'body' : sfTicket["description"],
     }
 
 def getGitHubIssues(username, password, repo):
@@ -47,3 +60,33 @@ def updateIssue(githubIssue, sfTicket, auth, milestoneNumbers, userdict, closedS
     response = requests.patch(githubIssue['url'], data=json.dumps(updateData), auth=auth)
     message = response.json()['message'] if 'message' in response.json() else None
     return (response.status_code, message)
+
+def updateAllIssues(username, password, repo, json_data):
+    auth = (username, password)
+
+    print("Fetching milestones...")
+    milestoneNumbers = milestone.getMilestoneNumbers(username, password, repo)
+    print("Milestones: " + str(len(milestoneNumbers)))
+
+    print("Fetching issues...")
+    githubIssues = getGitHubIssues(username, password, repo)
+    print("Issues: " + str(len(githubIssues)))
+
+    sfTickets = json_data['tickets']
+    closedStatusNames = json_data['closed_status_names']
+
+    successes = 0
+    failures = 0
+    for githubIssue in githubIssues:
+        print("Updating issue: " + githubIssue['title'] + "...")
+
+        sfTicket = [ticket for ticket in sfTickets if ticket['summary'] == githubIssue['title']][0]
+        (statusCode, message) = updateIssue(githubIssue, sfTicket, auth, milestoneNumbers, userdict, closedStatusNames)
+        if statusCode == requests.codes.ok:
+            successes += 1
+        else:
+            print(str(statusCode) + ": " + message)
+            failures += 1
+
+    issueCount = successes + failures
+    print("Issues: " + str(issueCount) + " Sucess: " + str(successes) + " Failure: " + str(failures))
