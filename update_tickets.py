@@ -17,6 +17,7 @@ import re
 from getpass import getpass
 from pprint import pprint
 
+import issue
 import milestone
 
 json_file=open('tickets.json')
@@ -37,19 +38,8 @@ print("Milestones: " + str(len(milestoneNumbers)))
 ###################
 #  UPDATE ISSUES  #
 ###################
-print("Fetching tickets...")
-githubIssues = []
-url = 'https://api.github.com/repos/' + username + '/' + repo + '/issues'
-links = dict([('next', url)])
-while "next" in links:
-    response = requests.get(links['next'], auth=auth)
-    if response.status_code == requests.codes.ok:
-        githubIssues.extend(response.json())
-    else:
-        print(str(response.status_code) + ": " + response.json()['message'])
-
-    links = dict((rel, url) for url, rel in re.findall('<(.*?)>; rel="(.*?)"', response.headers['link']))
-
+print("Fetching issues...")
+githubIssues = issue.getGitHubIssues(username, password, repo)
 print("Issues: " + str(len(githubIssues)))
 
 sfTickets = json_data['tickets']
