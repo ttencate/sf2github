@@ -17,8 +17,8 @@ import milestone
 
 def sf2github(sfTicket):
     return {
-        'title' : sfTicket["summary"],
-        'body' : sfTicket["description"],
+        'title' : sfTicket['summary'],
+        'body' : sfTicket['description'],
     }
 
 def getGitHubIssues(username, password, repo):
@@ -39,7 +39,7 @@ def getGitHubIssues(username, password, repo):
 
 def updateIssue(githubIssue, sfTicket, auth, milestoneNumbers, userdict, closedStatusNames):
     updateData = {
-        'title' : githubIssue['title']
+        'title' : githubIssue['title'] + " [sf#" + str(sfTicket['ticket_num']) + "]"
     }
 
     milestone = sfTicket['custom_fields']['_milestone']
