@@ -74,25 +74,31 @@ def updateAllIssues(auth, repo, json_data):
 
     successes = 0
     failures = 0
+    skipped = 0
     for githubIssue in githubIssues:
         print("Updating issue #" + str(githubIssue['number']) + ": " + githubIssue['title'] + "...")
 
         matchingTickets = [ticket for ticket in sfTickets if ticket['summary'] == githubIssue['title']]
         if(len(matchingTickets) > 1):
             print("  *** Warning: Duplicate title found. ***")
-        sfTicket = matchingTickets[0]
 
-        (statusCode, message) = updateIssue(githubIssue, sfTicket, auth, milestoneNumbers, userdict, closedStatusNames)
-        if statusCode == requests.codes.ok:
-            successes += 1
+        if (len(matchingTickets) == 0):
+            print("  No matching SourceForge ticket")
+            skipped += 1
         else:
-            print(str(statusCode) + ": " + message)
-            failures += 1
+            sfTicket = matchingTickets[0]
 
-        addAllComments(auth, githubIssue['url'], sfTicket['discussion_thread']['posts'])
+            (statusCode, message) = updateIssue(githubIssue, sfTicket, auth, milestoneNumbers, userdict, closedStatusNames)
+            if statusCode == requests.codes.ok:
+                successes += 1
+            else:
+                print(str(statusCode) + ": " + message)
+                failures += 1
 
-    issueCount = successes + failures
-    print("Issues: " + str(issueCount) + " Sucess: " + str(successes) + " Failure: " + str(failures))
+            addAllComments(auth, githubIssue['url'], sfTicket['discussion_thread']['posts'])
+
+    issueCount = successes + failures + skipped
+    print("Issues: " + str(issueCount) + " Sucess: " + str(successes) + " Failure: " + str(failures) + " Skipped: " + str(skipped))
 
 def addAllComments(auth, issueURL, sfPosts):
     print("  Adding comments...")
