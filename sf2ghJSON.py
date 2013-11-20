@@ -61,4 +61,4 @@ def createGitHubArtifact(sfArtifacts, githubName, conversionFunction):
 
 createGitHubArtifact(json_data['milestones'], "milestones", milestone.sf2github)
 createGitHubArtifact(sorted(json_data['tickets'], key=lambda t: t['ticket_num']), "issues", issue.sf2github)
-issue.updateAllIssues(auth, repo, json_data)
+issue.updateAllIssues(auth, repo, json_data, not opts.no_id_in_title)
