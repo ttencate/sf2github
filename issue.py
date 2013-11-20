@@ -88,5 +88,27 @@ def updateAllIssues(username, password, repo, json_data):
             print(str(statusCode) + ": " + message)
             failures += 1
 
+        addAllComments(auth, githubIssue['url'], sfTicket['discussion_thread']['posts'])
+
     issueCount = successes + failures
     print("Issues: " + str(issueCount) + " Sucess: " + str(successes) + " Failure: " + str(failures))
+
+def addAllComments(auth, issueURL, sfPosts):
+    print("  Adding comments...")
+    successes = 0
+    failures = 0
+    for sfPost in sfPosts:
+        (statusCode, message) = addComment(auth, issueURL, sfPost['text'])
+        if statusCode == 201:
+            successes += 1
+        else:
+            print(str(statusCode) + ": " + message)
+            failures += 1
+
+    commentCount = successes + failures
+    print("  Comments: " + str(commentCount) + " Sucess: " + str(successes) + " Failure: " + str(failures))
+
+def addComment(auth, issueURL, body):
+    response = requests.post(issueURL + "/comments", data=json.dumps({'body' : body}), auth=auth)
+    message = response.json()['message'] if 'message' in response.json() else None
+    return (response.status_code, message)
