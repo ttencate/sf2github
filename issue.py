@@ -78,7 +78,7 @@ def updateAllIssues(username, password, repo, json_data):
     successes = 0
     failures = 0
     for githubIssue in githubIssues:
-        print("Updating issue: " + githubIssue['title'] + "...")
+        print("Updating issue #" + str(githubIssue['number']) + ": " + githubIssue['title'] + "...")
 
         sfTicket = [ticket for ticket in sfTickets if ticket['summary'] == githubIssue['title']][0]
         (statusCode, message) = updateIssue(githubIssue, sfTicket, auth, milestoneNumbers, userdict, closedStatusNames)
