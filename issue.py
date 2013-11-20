@@ -21,10 +21,9 @@ def sf2github(sfTicket):
         'body' : sfTicket['description'],
     }
 
-def getGitHubIssues(username, password, repo):
-    auth = (username, password)
+def getGitHubIssues(auth, repo):
     githubIssues = []
-    url = 'https://api.github.com/repos/' + username + '/' + repo + '/issues'
+    url = 'https://api.github.com/repos/' + repo + '/issues'
     links = dict([('next', url)])
     while "next" in links:
         response = requests.get(links['next'], auth=auth)
@@ -61,15 +60,13 @@ def updateIssue(githubIssue, sfTicket, auth, milestoneNumbers, userdict, closedS
     message = response.json()['message'] if 'message' in response.json() else None
     return (response.status_code, message)
 
-def updateAllIssues(username, password, repo, json_data):
-    auth = (username, password)
-
+def updateAllIssues(auth, repo, json_data):
     print("Fetching milestones...")
-    milestoneNumbers = milestone.getMilestoneNumbers(username, password, repo)
+    milestoneNumbers = milestone.getMilestoneNumbers(auth, repo)
     print("Milestones: " + str(len(milestoneNumbers)))
 
     print("Fetching issues...")
-    githubIssues = getGitHubIssues(username, password, repo)
+    githubIssues = getGitHubIssues(auth, repo)
     print("Issues: " + str(len(githubIssues)))
 
     sfTickets = json_data['tickets']
