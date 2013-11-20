@@ -80,7 +80,11 @@ def updateAllIssues(username, password, repo, json_data):
     for githubIssue in githubIssues:
         print("Updating issue #" + str(githubIssue['number']) + ": " + githubIssue['title'] + "...")
 
-        sfTicket = [ticket for ticket in sfTickets if ticket['summary'] == githubIssue['title']][0]
+        matchingTickets = [ticket for ticket in sfTickets if ticket['summary'] == githubIssue['title']]
+        if(len(matchingTickets) > 1):
+            print("  *** Warning: Duplicate title found. ***")
+        sfTicket = matchingTickets[0]
+
         (statusCode, message) = updateIssue(githubIssue, sfTicket, auth, milestoneNumbers, userdict, closedStatusNames)
         if statusCode == requests.codes.ok:
             successes += 1
