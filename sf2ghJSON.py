@@ -33,7 +33,7 @@ json_file.close()
 password = getpass('%s\'s GitHub password: ' % username)
 auth = (username, password)
 
-def createGitHubArtifact(sfName, githubName, conversionFunction):
+def createGitHubArtifact(sfArtifacts, githubName, conversionFunction):
     print("-----------------")
     print(githubName.upper())
     print("-----------------")
@@ -41,7 +41,7 @@ def createGitHubArtifact(sfName, githubName, conversionFunction):
     successes = 0
     failures = 0
 
-    for sfArtifact in json_data[sfName]:
+    for sfArtifact in sfArtifacts:
         ghArtifact = conversionFunction(sfArtifact)
 
         print("Adding " + githubName + " " + ghArtifact['title'] + "...")
@@ -59,5 +59,5 @@ def createGitHubArtifact(sfName, githubName, conversionFunction):
     total = successes + failures
     print(githubName + ": " + str(total) + " Success: " + str(successes) + " Failure: " + str(failures))
 
-createGitHubArtifact("milestones", "milestones", milestone.sf2github)
-createGitHubArtifact("tickets", "issues", issue.sf2github)
+createGitHubArtifact(json_data['milestones'], "milestones", milestone.sf2github)
+createGitHubArtifact(sorted(json_data['tickets'], key=lambda t: t['ticket_num']), "issues", issue.sf2github)
