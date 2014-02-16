@@ -52,10 +52,7 @@ def updateIssue(githubIssue, sfTicket, auth, milestoneNumbers, userdict,
 
     assignedTo = sfTicket['assigned_to']
     if assignedTo != "nobody":
-        if assignedTo in userdict:
-            updateData['assignee'] = userdict[assignedTo]
-        else:
-            updateData['assignee'] = assignedTo
+        updateData['assignee'] = userdict.get(assignedTo, assignedTo)
 
     status = sfTicket['status']
     if status in closedStatusNames:
