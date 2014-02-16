@@ -44,7 +44,7 @@ def updateIssue(githubIssue, sfTicket, auth, milestoneNumbers, userdict, closedS
     if appendSFNumber:
         updateData['title'] += " [sf#" + str(sfTicket['ticket_num']) + "]"
 
-    milestone = sfTicket['custom_fields']['_milestone']
+    milestone = sfTicket['custom_fields'].get('_milestone')
     if milestone in milestoneNumbers:
         updateData['milestone'] = milestoneNumbers[milestone]
 
