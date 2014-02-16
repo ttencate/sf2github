@@ -8,10 +8,10 @@ def sf2github(sfMilestone):
         'state': state,
     }
 
-    if sfMilestone["description"] != "":
+    if sfMilestone["description"]:
         ghMilestone["description"] = sfMilestone["description"]
 
-    if sfMilestone["due_date"] != "":
+    if sfMilestone["due_date"]:
         sfDate = datetime.strptime(sfMilestone["due_date"], "%m/%d/%Y")
         ghMilestone['due_on'] = sfDate.strftime("%Y-%m-%d") + "T00:00:00Z"
 
