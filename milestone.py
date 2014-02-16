@@ -1,12 +1,11 @@
-import json
 import requests
 from datetime import datetime
 
 def sf2github(sfMilestone):
     state = "closed" if sfMilestone["complete"] else "open"
     ghMilestone = {
-        'title' : sfMilestone["name"],
-        'state' : state,
+        'title': sfMilestone["name"],
+        'state': state,
     }
 
     if sfMilestone["description"] != "":
@@ -22,8 +21,8 @@ def getMilestoneNumbers(auth, repo):
     milestoneNumbers = {}
 
     for state in ['open', 'closed']:
-        stateJSON = {'state' : state}
-        url = 'https://api.github.com/repos/' + repo + '/milestones' 
+        stateJSON = {'state': state}
+        url = 'https://api.github.com/repos/' + repo + '/milestones'
         response = requests.get(url, params=stateJSON, auth=auth)
 
         if response.status_code == requests.codes.ok:
