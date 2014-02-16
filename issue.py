@@ -13,7 +13,7 @@ import json
 import requests
 import re
 
-import milestone
+import milestone as milestones
 
 def sf2github(sfTicket):
     return {
@@ -65,7 +65,7 @@ def updateIssue(githubIssue, sfTicket, auth, milestoneNumbers, userdict, closedS
 
 def updateAllIssues(auth, repo, json_data, appendSFNumber):
     print("Fetching milestones...")
-    milestoneNumbers = milestone.getMilestoneNumbers(auth, repo)
+    milestoneNumbers = milestones.getMilestoneNumbers(auth, repo)
     print("Milestones: " + str(len(milestoneNumbers)))
 
     print("Fetching issues...")
