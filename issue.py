@@ -1,19 +1,18 @@
-#######################################################################
-userdict = {
-    "codeguru": "codeguru42"
-    # provide your sourceforge -> github user name mappings here.
-    # syntax:
-    # "old_sf_user": "NewGitHubUser",
-    # "another": "line",
-    # "last": "line"
-}
-#######################################################################
-
 import json
 import requests
 import re
 
 import milestone as milestones
+
+
+userdict = {
+    "codeguru": "codeguru42"
+}
+"""
+mapping of Sourceforge username -> GitHub username. Extend this dictionary
+by passing a JSON file with additional mappings to the --user-map parameter
+of sf2ghJSON.py
+"""
 
 def sf2github(sfTicket):
     return {
