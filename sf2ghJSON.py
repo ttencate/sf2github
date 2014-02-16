@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 import json
 import requests
+import textwrap
 from getpass import getpass
 
 import milestone
@@ -9,10 +10,19 @@ import issue
 import optparse
 import sys
 
-parser = optparse.OptionParser(usage='Usage: %prog [options] <sfexport>.json <repoowner>/<repo>\n\tIf the -u option is not specified, repoowner will be used as\n\tusername.\n\tYou might want to edit %prog with a text editor and set\n\tup the userdict = {...} accordingly, for mapping user names.')
-parser.add_option('-s', '--start', dest='start_id', action='store', help='id of first issue to import; useful for aborted runs')
+usage = textwrap.dedent("""
+    Usage: %prog [options] <sfexport>.json <repoowner>/<repo>
+    \tIf the -u option is not specified, repoowner will be used as
+    \tusername.
+    \tYou might want to edit %prog with a text editor and set
+    \tup the userdict = {...} accordingly, for mapping user names.
+    """).lstrip()
+parser = optparse.OptionParser(usage=usage)
+parser.add_option('-s', '--start', dest='start_id', action='store',
+    help='id of first issue to import; useful for aborted runs')
 parser.add_option('-u', '--user', dest='github_user')
-parser.add_option("-T", "--no-id-in-title", action="store_true", dest="no_id_in_title", help="do not append '[sf#12345]' to issue titles")
+parser.add_option("-T", "--no-id-in-title", action="store_true",
+    dest="no_id_in_title", help="do not append '[sf#12345]' to issue titles")
 opts, args = parser.parse_args()
 
 try:
@@ -57,8 +67,10 @@ def createGitHubArtifact(sfArtifacts, githubName, conversionFunction):
             failures += 1
 
     total = successes + failures
-    print(githubName + ": " + str(total) + " Success: " + str(successes) + " Failure: " + str(failures))
+    print(githubName + ": " + str(total) + " Success: " + str(successes)
+        + " Failure: " + str(failures))
 
 createGitHubArtifact(json_data['milestones'], "milestones", milestone.sf2github)
-createGitHubArtifact(sorted(json_data['tickets'], key=lambda t: t['ticket_num']), "issues", issue.sf2github)
+tickets = sorted(json_data['tickets'], key=lambda t: t['ticket_num'])
+createGitHubArtifact(tickets, "issues", issue.sf2github)
 issue.updateAllIssues(auth, repo, json_data, not opts.no_id_in_title)

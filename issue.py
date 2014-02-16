@@ -32,11 +32,13 @@ def getGitHubIssues(auth, repo):
         else:
             print(str(response.status_code) + ": " + response.json()['message'])
 
-        links = dict((rel, url) for url, rel in re.findall('<(.*?)>; rel="(.*?)"', response.headers['link']))
+        matches = re.findall('<(.*?)>; rel="(.*?)"', response.headers['link'])
+        links = dict((rel, url) for url, rel in matches)
 
     return githubIssues
 
-def updateIssue(githubIssue, sfTicket, auth, milestoneNumbers, userdict, closedStatusNames, appendSFNumber):
+def updateIssue(githubIssue, sfTicket, auth, milestoneNumbers, userdict,
+        closedStatusNames, appendSFNumber):
     updateData = {
         'title': githubIssue['title']
     }
@@ -59,7 +61,8 @@ def updateIssue(githubIssue, sfTicket, auth, milestoneNumbers, userdict, closedS
     if status in closedStatusNames:
         updateData['state'] = "closed"
 
-    response = requests.patch(githubIssue['url'], data=json.dumps(updateData), auth=auth)
+    response = requests.patch(githubIssue['url'], data=json.dumps(updateData),
+        auth=auth)
     message = response.json()['message'] if 'message' in response.json() else None
     return (response.status_code, message)
 
@@ -79,9 +82,14 @@ def updateAllIssues(auth, repo, json_data, appendSFNumber):
     failures = 0
     skipped = 0
     for githubIssue in githubIssues:
-        print("Updating issue #" + str(githubIssue['number']) + ": " + githubIssue['title'] + "...")
+        print("Updating issue #" + str(githubIssue['number']) + ": "
+            + githubIssue['title'] + "...")
 
-        matchingTickets = [ticket for ticket in sfTickets if ticket['summary'] == githubIssue['title']]
+        matchingTickets = [
+            ticket
+            for ticket in sfTickets
+            if ticket['summary'] == githubIssue['title']
+        ]
         if(len(matchingTickets) > 1):
             print("  *** Warning: Duplicate title found. ***")
 
@@ -91,18 +99,20 @@ def updateAllIssues(auth, repo, json_data, appendSFNumber):
         else:
             sfTicket = matchingTickets[0]
 
-            (statusCode, message) = updateIssue(githubIssue, sfTicket, auth, milestoneNumbers, userdict,
-                                                closedStatusNames, appendSFNumber)
+            (statusCode, message) = updateIssue(githubIssue, sfTicket, auth,
+                milestoneNumbers, userdict, closedStatusNames, appendSFNumber)
             if statusCode == requests.codes.ok:
                 successes += 1
             else:
                 print(str(statusCode) + ": " + message)
                 failures += 1
 
-            addAllComments(auth, githubIssue['url'], sfTicket['discussion_thread']['posts'])
+            addAllComments(auth, githubIssue['url'],
+                sfTicket['discussion_thread']['posts'])
 
     issueCount = successes + failures + skipped
-    print("Issues: " + str(issueCount) + " Success: " + str(successes) + " Failure: " + str(failures) + " Skipped: " + str(skipped))
+    print("Issues: " + str(issueCount) + " Success: " + str(successes) +
+        " Failure: " + str(failures) + " Skipped: " + str(skipped))
 
 def addAllComments(auth, issueURL, sfPosts):
     print("  Adding comments...")
@@ -117,9 +127,11 @@ def addAllComments(auth, issueURL, sfPosts):
             failures += 1
 
     commentCount = successes + failures
-    print("  Comments: " + str(commentCount) + " Success: " + str(successes) + " Failure: " + str(failures))
+    print("  Comments: " + str(commentCount) + " Success: " + str(successes)
+        + " Failure: " + str(failures))
 
 def addComment(auth, issueURL, body):
-    response = requests.post(issueURL + "/comments", data=json.dumps({'body': body}), auth=auth)
-    message = response.json()['message'] if 'message' in response.json() else None
+    response = requests.post(issueURL + "/comments",
+        data=json.dumps({'body': body}), auth=auth)
+    message = response.json().get('message')
     return (response.status_code, message)
