@@ -102,7 +102,7 @@ def updateAllIssues(auth, repo, json_data, appendSFNumber):
             addAllComments(auth, githubIssue['url'], sfTicket['discussion_thread']['posts'])
 
     issueCount = successes + failures + skipped
-    print("Issues: " + str(issueCount) + " Sucess: " + str(successes) + " Failure: " + str(failures) + " Skipped: " + str(skipped))
+    print("Issues: " + str(issueCount) + " Success: " + str(successes) + " Failure: " + str(failures) + " Skipped: " + str(skipped))
 
 def addAllComments(auth, issueURL, sfPosts):
     print("  Adding comments...")
@@ -117,7 +117,7 @@ def addAllComments(auth, issueURL, sfPosts):
             failures += 1
 
     commentCount = successes + failures
-    print("  Comments: " + str(commentCount) + " Sucess: " + str(successes) + " Failure: " + str(failures))
+    print("  Comments: " + str(commentCount) + " Success: " + str(successes) + " Failure: " + str(failures))
 
 def addComment(auth, issueURL, body):
     response = requests.post(issueURL + "/comments", data=json.dumps({'body': body}), auth=auth)
