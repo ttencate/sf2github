@@ -1,6 +1,6 @@
 #######################################################################
 userdict = {
-    "codeguru" : "codeguru42"
+    "codeguru": "codeguru42"
     # provide your sourceforge -> github user name mappings here.
     # syntax:
     # "old_sf_user": "NewGitHubUser",
@@ -17,8 +17,8 @@ import milestone
 
 def sf2github(sfTicket):
     return {
-        'title' : sfTicket['summary'],
-        'body' : sfTicket['description'],
+        'title': sfTicket['summary'],
+        'body': sfTicket['description'],
     }
 
 def getGitHubIssues(auth, repo):
@@ -38,7 +38,7 @@ def getGitHubIssues(auth, repo):
 
 def updateIssue(githubIssue, sfTicket, auth, milestoneNumbers, userdict, closedStatusNames, appendSFNumber):
     updateData = {
-        'title' : githubIssue['title']
+        'title': githubIssue['title']
     }
 
     if appendSFNumber:
@@ -120,6 +120,6 @@ def addAllComments(auth, issueURL, sfPosts):
     print("  Comments: " + str(commentCount) + " Sucess: " + str(successes) + " Failure: " + str(failures))
 
 def addComment(auth, issueURL, body):
-    response = requests.post(issueURL + "/comments", data=json.dumps({'body' : body}), auth=auth)
+    response = requests.post(issueURL + "/comments", data=json.dumps({'body': body}), auth=auth)
     message = response.json()['message'] if 'message' in response.json() else None
     return (response.status_code, message)
