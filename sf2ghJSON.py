@@ -35,9 +35,8 @@ except (ValueError, IndexError):
 if opts.github_user:
     username = opts.github_user
 
-json_file=open(json_file_name)
-json_data = json.load(json_file)
-json_file.close()
+with open(json_file_name) as export_stream:
+    export = json.load(export_stream)
 
 # Get password
 password = getpass('%s\'s GitHub password: ' % username)
@@ -70,7 +69,7 @@ def createGitHubArtifact(sfArtifacts, githubName, conversionFunction):
     print(githubName + ": " + str(total) + " Success: " + str(successes)
         + " Failure: " + str(failures))
 
-createGitHubArtifact(json_data['milestones'], "milestones", milestone.sf2github)
-tickets = sorted(json_data['tickets'], key=lambda t: t['ticket_num'])
+createGitHubArtifact(export['milestones'], "milestones", milestone.sf2github)
+tickets = sorted(export['tickets'], key=lambda t: t['ticket_num'])
 createGitHubArtifact(tickets, "issues", issue.sf2github)
-issue.updateAllIssues(auth, repo, json_data, not opts.no_id_in_title)
+issue.updateAllIssues(auth, repo, export, not opts.no_id_in_title)
