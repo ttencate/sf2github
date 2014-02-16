@@ -63,7 +63,7 @@ def updateIssue(githubIssue, sfTicket, auth, milestoneNumbers, userdict,
 
     response = requests.patch(githubIssue['url'], data=json.dumps(updateData),
         auth=auth)
-    message = response.json()['message'] if 'message' in response.json() else None
+    message = response.json().get('message')
     return (response.status_code, message)
 
 def updateAllIssues(auth, repo, json_data, appendSFNumber):
