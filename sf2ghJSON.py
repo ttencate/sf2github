@@ -9,6 +9,10 @@ import issue
 
 import argparse
 
+def load_json(filename):
+    with open(filename) as stream:
+        return json.load(stream)
+
 usage = textwrap.dedent("""
     %(prog)s [options] <sfexport>.json <repoowner>/<repo>
     \tIf the -u option is not specified, repoowner will be used as
@@ -24,9 +28,14 @@ parser.add_argument('-s', '--start', dest='start_id', action='store',
 parser.add_argument('-u', '--user', dest='github_user')
 parser.add_argument("-T", "--no-id-in-title", action="store_true",
     dest="no_id_in_title", help="do not append '[sf#12345]' to issue titles")
+parser.add_argument('-U', '--user-map',
+    help="A json file mapping SF username to GitHub username", default={},
+    type=load_json)
 args = parser.parse_args()
 
 username = args.github_user or args.repo.split('/')[0]
+
+issue.userdict.update(args.user_map)
 
 with open(args.input_file) as export_stream:
     export = json.load(export_stream)
