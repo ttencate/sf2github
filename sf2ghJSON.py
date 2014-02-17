@@ -1,33 +1,44 @@
 #!/usr/bin/env python
 import json
 import requests
+import textwrap
 from getpass import getpass
 
 import milestone
 import issue
 
-import optparse
-import sys
+import argparse
 
-parser = optparse.OptionParser(usage='Usage: %prog [options] <sfexport>.json <repoowner>/<repo>\n\tIf the -u option is not specified, repoowner will be used as\n\tusername.\n\tYou might want to edit %prog with a text editor and set\n\tup the userdict = {...} accordingly, for mapping user names.')
-parser.add_option('-s', '--start', dest='start_id', action='store', help='id of first issue to import; useful for aborted runs')
-parser.add_option('-u', '--user', dest='github_user')
-parser.add_option("-T", "--no-id-in-title", action="store_true", dest="no_id_in_title", help="do not append '[sf#12345]' to issue titles")
-opts, args = parser.parse_args()
+def load_json(filename):
+    with open(filename) as stream:
+        return json.load(stream)
 
-try:
-    json_file_name, repo = args
-    username = repo.split('/')[0]
-except (ValueError, IndexError):
-    parser.print_help()
-    sys.exit(1)
+usage = textwrap.dedent("""
+    %(prog)s [options] <sfexport>.json <repoowner>/<repo>
+    \tIf the -u option is not specified, repoowner will be used as
+    \tusername.
+    \tYou might want to edit %(prog)s with a text editor and set
+    \tup the userdict = {...} accordingly, for mapping user names.
+    """).lstrip()
+parser = argparse.ArgumentParser(usage=usage)
+parser.add_argument('input_file', help="JSON export from Sourceforge")
+parser.add_argument('repo', help="Repo name as <owner>/<project>")
+parser.add_argument('-s', '--start', dest='start_id', action='store',
+    help='id of first issue to import; useful for aborted runs')
+parser.add_argument('-u', '--user', dest='github_user')
+parser.add_argument("-T", "--no-id-in-title", action="store_true",
+    dest="no_id_in_title", help="do not append '[sf#12345]' to issue titles")
+parser.add_argument('-U', '--user-map',
+    help="A json file mapping SF username to GitHub username", default={},
+    type=load_json)
+args = parser.parse_args()
 
-if opts.github_user:
-    username = opts.github_user
+username = args.github_user or args.repo.split('/')[0]
 
-json_file=open(json_file_name)
-json_data = json.load(json_file)
-json_file.close()
+issue.userdict.update(args.user_map)
+
+with open(args.input_file) as export_stream:
+    export = json.load(export_stream)
 
 # Get password
 password = getpass('%s\'s GitHub password: ' % username)
@@ -46,7 +57,7 @@ def createGitHubArtifact(sfArtifacts, githubName, conversionFunction):
 
         print("Adding " + githubName + " " + ghArtifact['title'] + "...")
         response = requests.post(
-            'https://api.github.com/repos/' + repo + '/' + githubName,
+            'https://api.github.com/repos/' + args.repo + '/' + githubName,
             data=json.dumps(ghArtifact),
             auth=auth)
 
@@ -57,8 +68,10 @@ def createGitHubArtifact(sfArtifacts, githubName, conversionFunction):
             failures += 1
 
     total = successes + failures
-    print(githubName + ": " + str(total) + " Success: " + str(successes) + " Failure: " + str(failures))
+    print(githubName + ": " + str(total) + " Success: " + str(successes)
+        + " Failure: " + str(failures))
 
-createGitHubArtifact(json_data['milestones'], "milestones", milestone.sf2github)
-createGitHubArtifact(sorted(json_data['tickets'], key=lambda t: t['ticket_num']), "issues", issue.sf2github)
-issue.updateAllIssues(auth, repo, json_data, not opts.no_id_in_title)
+createGitHubArtifact(export['milestones'], "milestones", milestone.sf2github)
+tickets = sorted(export['tickets'], key=lambda t: t['ticket_num'])
+createGitHubArtifact(tickets, "issues", issue.sf2github)
+issue.updateAllIssues(auth, args.repo, export, not args.no_id_in_title)

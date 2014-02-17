@@ -2,10 +2,12 @@ sf2github README
 ================
 
 `sf2github` is a Python program
-that reads an XML export from a SourceForge project
+that reads a JSON export from a SourceForge project
 and pushes this data to GitHub via its REST API.
 
-The script is currently very incomplete and barely tested.
+The preferred entry point is the sf2ghJSON.py script.
+
+The script is currently somewhat incomplete and barely tested.
 If it works for you, great; if not, fix it up and send me a pull request!
 Currently, only migration of tracker issues is partly implemented,
 and there's little error handling.
@@ -52,15 +54,15 @@ sf2github depends on the [BeautifulSoup](http://www.crummy.com/software/Beautifu
 the [requests](http://docs.python-requests.org/en/latest/) and the 're' modules.
 If you don't have them, install them first.
 
-From SourceForge, you need to export the tracker data in XML.
-Read [here](https://sourceforge.net/apps/trac/sourceforge/wiki/XML export) for instructions.
+From SourceForge, you need to export the tracker data. This is done through
+the Export function of the admin interface.
 
-Run the `issues.py` script and it will print further instructions.
-Basically, if your SF XML export is in `foo.xml`,
-your GitHub username is `john`
+For more details on usage, run the `sf2ghJSON.py` script and it will print
+further instructions.
+Basically, if your SF export is in `bugs.json`, your GitHub username is `john`
 and your repository is `bar`:
 
-    ./issues.py foo.xml john/bar
+    ./sf2ghJSON.py bugs.json john/bar
 
 License
 -------
