@@ -44,6 +44,19 @@ with open(args.input_file) as export_stream:
 password = getpass('%s\'s GitHub password: ' % username)
 auth = (username, password)
 
+def getCollaborators(auth, repo):
+    collaborators = []
+    url = 'https://api.github.com/repos/' + repo + '/collaborators'
+    response = requests.get(url, auth=auth)
+    if response.status_code == requests.codes.ok:
+        detailed_collaborators = response.json()
+        for user in detailed_collaborators:
+            print("Login: {0}".format(user['login']))
+            collaborators.append(user['login'])
+    else:
+        print(str(response.status_code) + ": " + response.json()['message'])
+    return collaborators
+    
 def createGitHubArtifact(sfArtifacts, githubName, conversionFunction):
     print("-----------------")
     print(githubName.upper())
@@ -71,7 +84,9 @@ def createGitHubArtifact(sfArtifacts, githubName, conversionFunction):
     print(githubName + ": " + str(total) + " Success: " + str(successes)
         + " Failure: " + str(failures))
 
+collaborators = getCollaborators(auth, args.repo)
+
 createGitHubArtifact(export['milestones'], "milestones", milestone.sf2github)
 tickets = sorted(export['tickets'], key=lambda t: t['ticket_num'])
 createGitHubArtifact(tickets, "issues", issue.sf2github)
-issue.updateAllIssues(auth, args.repo, export, not args.no_id_in_title)
+issue.updateAllIssues(auth, args.repo, export, not args.no_id_in_title, collaborators)
