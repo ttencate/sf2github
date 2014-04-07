@@ -8,6 +8,7 @@ import milestone as milestones
 userdict = {
     "codeguru": "codeguru42"
 }
+
 """
 mapping of Sourceforge username -> GitHub username. Extend this dictionary
 by passing a JSON file with additional mappings to the --user-map parameter
@@ -40,7 +41,7 @@ def getGitHubIssues(auth, repo):
     return githubIssues
 
 def updateIssue(githubIssue, sfTicket, auth, milestoneNumbers, userdict,
-        closedStatusNames, appendSFNumber):
+        closedStatusNames, appendSFNumber, collaborators):
     updateData = {
         'title': githubIssue['title']
     }
@@ -54,7 +55,11 @@ def updateIssue(githubIssue, sfTicket, auth, milestoneNumbers, userdict,
 
     assignedTo = sfTicket['assigned_to']
     if assignedTo != "nobody":
-        updateData['assignee'] = userdict.get(assignedTo, assignedTo)
+        gitAssignedTo = userdict.get(assignedTo, assignedTo)
+        if gitAssignedTo in collaborators:
+            updateData['assignee'] = gitAssignedTo
+        else:
+            print("{0} is not a collaborator, not assigning issue".format(gitAssignedTo))
 
     status = sfTicket['status']
     if status in closedStatusNames:
@@ -65,7 +70,7 @@ def updateIssue(githubIssue, sfTicket, auth, milestoneNumbers, userdict,
     message = response.json().get('message')
     return (response.status_code, message)
 
-def updateAllIssues(auth, repo, json_data, appendSFNumber):
+def updateAllIssues(auth, repo, json_data, appendSFNumber, collaborators):
     print("Fetching milestones...")
     milestoneNumbers = milestones.getMilestoneNumbers(auth, repo)
     print("Milestones: " + str(len(milestoneNumbers)))
@@ -99,7 +104,7 @@ def updateAllIssues(auth, repo, json_data, appendSFNumber):
             sfTicket = matchingTickets[0]
 
             (statusCode, message) = updateIssue(githubIssue, sfTicket, auth,
-                milestoneNumbers, userdict, closedStatusNames, appendSFNumber)
+                milestoneNumbers, userdict, closedStatusNames, appendSFNumber, collaborators)
             if statusCode == requests.codes.ok:
                 successes += 1
             else:
