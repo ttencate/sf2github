@@ -44,7 +44,7 @@ Two Factor Authentication
 -------------------------
 
 If you are using two factor authentication you will not be able to use
-you're password and you'll get errors from the GitHub API about needing a
+your password and you'll get errors from the GitHub API about needing a
 OTP. The easiest way to handle this is to do goto your profile, under
 Applications you will find Personal access tokens. There you can generate a
 new token that you will use for a password here. Once you're done with the
