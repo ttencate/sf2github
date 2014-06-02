@@ -130,7 +130,7 @@ def handle_tracker_item(item, issue_title_prefix, statusprintprefix):
     item_details = item.find('field',attrs={'name':'details'}).string
     item_date = datetime.fromtimestamp(float(item.find('field',attrs={'name':'open_date'}).string))
     body = '\n\n'.join([
-        'Submitted by %s on %s' % (item_submitter, str(item_date)),
+        '*Originally submitted to the SourceForge repository on %s by %s*\n----' % (str(item_date), item_submitter),
         item_details,
     ])
     closed = item_id in closed_status_ids
@@ -183,7 +183,7 @@ def handle_tracker_item(item, issue_title_prefix, statusprintprefix):
     for followup in messages:
         commentdate = datetime.fromtimestamp(float(followup.find('field',attrs={'name':'adddate'}).string))
         comments.insert(0,'\n\n'.join([
-            'Submitted by %s on %s' % (followup.find('field',attrs={'name':'user_name'}).string,str(commentdate)),
+            '*Original comment by %s on %s*\n----' % (followup.find('field',attrs={'name':'user_name'}).string,str(commentdate)),
             cleanup_message_body(followup.find('field',attrs={'name':'body'}).string),
         ]))
 
