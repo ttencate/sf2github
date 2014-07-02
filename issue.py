@@ -16,9 +16,10 @@ of sf2ghJSON.py
 """
 
 def sf2github(sfTicket):
+    timestamp = re.sub(':\d+(\.\d+)?$', '', sfTicket['created_date']) + " UTC"
     return {
         'title': sfTicket['summary'],
-        'body': sfTicket['description'],
+        'body': '**Reported by ' + sfTicket['reported_by'] + ' on ' + timestamp + "**\n" + sfTicket['description'],
     }
 
 def getGitHubIssues(auth, repo):
@@ -123,7 +124,14 @@ def addAllComments(auth, issueURL, sfPosts):
     successes = 0
     failures = 0
     for sfPost in sfPosts:
-        (statusCode, message) = addComment(auth, issueURL, sfPost['text'])
+        timestamp = re.sub(':\d+(\.\d+)?$', '', sfPost['timestamp']) + " UTC"
+        post = '**'
+        if re.match('^- \*\*', sfPost['text']):
+            post += 'Updated by '
+        else:
+            post += 'Commented by '
+        post += sfPost['author'] + ' on ' + timestamp + "**\n" + sfPost['text']
+        (statusCode, message) = addComment(auth, issueURL, post)
         if statusCode == 201:
             successes += 1
         else:
