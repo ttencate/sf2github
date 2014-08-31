@@ -42,9 +42,9 @@ def getGitHubIssues(auth, repo):
     return githubIssues
 
 def updateIssue(githubIssue, sfTicket, auth, milestoneNumbers, userdict,
-        closedStatusNames, appendSFNumber, collaborators):
+        closedStatusNames, appendSFNumber, collaborators, prefix = ""):
     updateData = {
-        'title': githubIssue['title']
+        'title': prefix + ("" if prefix == "" else " ") + githubIssue['title']
     }
 
     if appendSFNumber:
@@ -71,7 +71,7 @@ def updateIssue(githubIssue, sfTicket, auth, milestoneNumbers, userdict,
     message = response.json().get('message')
     return (response.status_code, message)
 
-def updateAllIssues(auth, repo, json_data, appendSFNumber, collaborators):
+def updateAllIssues(auth, repo, json_data, appendSFNumber, collaborators, prefix = ""):
     print("Fetching milestones...")
     milestoneNumbers = milestones.getMilestoneNumbers(auth, repo)
     print("Milestones: " + str(len(milestoneNumbers)))
@@ -105,7 +105,7 @@ def updateAllIssues(auth, repo, json_data, appendSFNumber, collaborators):
             sfTicket = matchingTickets[0]
 
             (statusCode, message) = updateIssue(githubIssue, sfTicket, auth,
-                milestoneNumbers, userdict, closedStatusNames, appendSFNumber, collaborators)
+                milestoneNumbers, userdict, closedStatusNames, appendSFNumber, collaborators, prefix)
             if statusCode == requests.codes.ok:
                 successes += 1
             else:

@@ -56,7 +56,22 @@ def getCollaborators(auth, repo):
     else:
         print(str(response.status_code) + ": " + response.json()['message'])
     return collaborators
-    
+
+def getPrefix(export):
+    prefixes = {
+        "Bugs": "[Bug]",
+        "Feature Request": "[Feature]",
+        "Feature Requests": "[Feature]",
+        "Patch": "[Patch]",
+        "Patches": "[Patch]",
+        "Support Requests": "[Support]",
+        "Tech Support": "[Support]"
+    }
+    trackerName = export["tracker_config"]["options"]["mount_label"]
+    if trackerName not in prefixes:
+        return ""
+    return prefixes[trackerName]
+
 def createGitHubArtifact(sfArtifacts, githubName, conversionFunction):
     print("-----------------")
     print(githubName.upper())
@@ -89,4 +104,5 @@ collaborators = getCollaborators(auth, args.repo)
 createGitHubArtifact(export['milestones'], "milestones", milestone.sf2github)
 tickets = sorted(export['tickets'], key=lambda t: t['ticket_num'])
 createGitHubArtifact(tickets, "issues", issue.sf2github)
-issue.updateAllIssues(auth, args.repo, export, not args.no_id_in_title, collaborators)
+prefix = getPrefix(export)
+issue.updateAllIssues(auth, args.repo, export, not args.no_id_in_title, collaborators, prefix)
