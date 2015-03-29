@@ -3,6 +3,7 @@ import json
 import requests
 import textwrap
 from getpass import getpass
+from time import sleep
 
 import milestone
 import issue
@@ -82,6 +83,9 @@ def createGitHubArtifact(sfArtifacts, githubName, conversionFunction):
 
     for sfArtifact in sfArtifacts:
         ghArtifact = conversionFunction(sfArtifact)
+
+        print("Sleeping 3 seconds")
+        sleep(3)
 
         print("Adding " + githubName + " " + ghArtifact['title'] + "...")
         response = requests.post(
