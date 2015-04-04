@@ -4,6 +4,7 @@ import re
 
 import milestone as milestones
 
+from time import sleep
 
 userdict = {
     "codeguru": "codeguru42"
@@ -137,6 +138,9 @@ def addAllComments(auth, issueURL, sfPosts):
         else:
             print(str(statusCode) + ": " + message)
             failures += 1
+
+        print("Sleeping 3 seconds")
+        sleep(3)
 
     commentCount = successes + failures
     print("  Comments: " + str(commentCount) + " Success: " + str(successes)
