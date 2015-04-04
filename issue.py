@@ -3,6 +3,7 @@ import requests
 import re
 
 import milestone as milestones
+import urllib2
 
 from time import sleep
 
@@ -132,6 +133,13 @@ def addAllComments(auth, issueURL, sfPosts):
         else:
             post += 'Commented by '
         post += sfPost['author'] + ' on ' + timestamp + "**\n" + sfPost['text']
+        
+        for attach in sfPost['attachments']:
+            print("   Adding attached file: " + attach['url'])
+            post += "\nAttached file" + attach['url'].split('/')[-1] + ":\n\n"
+            for line in urllib2.urlopen(attach['url']):
+                post += '    ' + line
+
         (statusCode, message) = addComment(auth, issueURL, post)
         if statusCode == 201:
             successes += 1
