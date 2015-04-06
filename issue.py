@@ -136,9 +136,19 @@ def addAllComments(auth, issueURL, sfPosts):
         
         for attach in sfPost['attachments']:
             print("   Adding attached file: " + attach['url'])
-            post += "\nAttached file" + attach['url'].split('/')[-1] + ":\n\n"
-            for line in urllib2.urlopen(attach['url']):
-                post += '    ' + line
+            post += "\nAttached file " + attach['url'].split('/')[-1] + ":\n\n"
+
+            try:
+                for line in urllib2.urlopen(attach['url']):
+                    post += '    ' + line
+            except urllib2.URLError as e:
+                print("   !!! Could not add attachement: " + e.reason)
+                post += "The file could not get attached: " + e.reason + "\n"
+                failures += 1
+            except urllib2.HTTPError as e:
+                print("   !!! Could not add attachement: " + e.reason)
+                post += "The file could not get attached: " + e.reason + "\n"
+                failures += 1
 
         (statusCode, message) = addComment(auth, issueURL, post)
         if statusCode == 201:
