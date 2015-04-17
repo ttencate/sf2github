@@ -1,0 +1,47 @@
+#!/usr/bin/env bash
+set -e
+
+function req {
+	local program="$1"
+
+	if [[ -z "$(which "$program")" ]];
+	then
+		echo "$program is required" >&2
+		exit 1
+	fi
+}
+
+req python2.7
+req virtualenv
+req pip
+
+
+SF2GH_VENV="${BASH_SOURCE%/*}/.sf2gh-virtualenv"
+
+[[ -d "$SF2GH_VENV" ]] || NEEDS_INSTALLATION="true"
+
+if [[ "$NEEDS_INSTALLATION" == "true" ]];
+then
+	# Create new virtualenv directory.
+	virtualenv --python python2.7 --no-site-packages "${SF2GH_VENV}"
+
+	# Just an empty line to group output lines.
+	echo
+fi
+
+# Deactivate virtual environment before exiting script.
+trap deactivate EXIT;
+
+# Activate virtual environment.
+source "${SF2GH_VENV}/bin/activate"
+
+if [[ "$NEEDS_INSTALLATION" == "true" ]];
+then
+	# Install python packages/dependencies.
+	pip install --no-deps --requirement requirements.txt
+
+	# Just an empty line to group output lines.
+	echo
+fi
+
+python "${BASH_SOURCE%/*}/sf2ghJSON.py" "$@"

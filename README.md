@@ -1,11 +1,11 @@
 sf2github README
 ================
 
-`sf2github` is a Python program
+sf2github is a Python program
 that reads a JSON export from a SourceForge project
 and pushes this data to GitHub via its REST API.
 
-The preferred entry point is the sf2ghJSON.py script.
+The preferred entry point is `sf2gh`.
 
 The script is currently somewhat incomplete and barely tested.
 If it works for you, great; if not, fix it up and send me a pull request!
@@ -61,19 +61,26 @@ http://help.github.com/svn-importing/
 Usage
 -----
 
-sf2github depends on the [BeautifulSoup](http://www.crummy.com/software/BeautifulSoup/),
-the [requests](http://docs.python-requests.org/en/latest/) and the 're' modules.
-If you don't have them, install them first.
-
 From SourceForge, you need to export the tracker data. This is done through
 the Export function of the admin interface.
 
-For more details on usage, run the `sf2ghJSON.py` script and it will print
+For more details on usage, run `sf2gh -h` and it will print
 further instructions.
 Basically, if your SF export is in `bugs.json`, your GitHub username is `john`
 and your repository is `bar`:
 
-    ./sf2ghJSON.py bugs.json john/bar
+    ./sf2gh bugs.json john/bar
+
+
+*Manual installation*
+
+The `sf2gh` command uses `python2.7` and wraps execution in a virtual
+environment installed using `virtualenv` and `pip`. If that doesn't work for
+you, try installing dependencies in `requirements.txt` and then running
+`./sf2ghJSON.py` directly.
+
+
+
 
 License
 -------
