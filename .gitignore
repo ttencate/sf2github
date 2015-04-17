@@ -1,2 +1,5 @@
 *.pyc
 *.json
+
+# sf2gh local virtual environment
+.sf2gh-virtualenv/
