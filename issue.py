@@ -141,12 +141,8 @@ def addAllComments(auth, issueURL, sfPosts):
             try:
                 for line in urllib2.urlopen(attach['url']):
                     post += '    ' + line
-            except urllib2.URLError as e:
-                print("   !!! Could not add attachement: " + e.reason)
-                post += "The file could not get attached: " + e.reason + "\n"
-                failures += 1
-            except urllib2.HTTPError as e:
-                print("   !!! Could not add attachement: " + e.reason)
+            except Exception as e:
+                print("   !!! Could not add attachment: " + e.reason)
                 post += "The file could not get attached: " + e.reason + "\n"
                 failures += 1
 
