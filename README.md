@@ -1,3 +1,9 @@
+-----
+
+**This tool has problems with throttling because it uses the old GitHub Issues API. You probably want to use the more up to date [cmungall/gosf2github](https://github.com/cmungall/gosf2github) instead.**
+
+-----
+
 sf2github README
 ================
 
